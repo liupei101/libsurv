@@ -62,19 +62,19 @@ class model(object):
     def _check_params(self):
         if "objective" in self.model_params:
             if self.model_params["objective"] != "multi:softprob":
-                raise ParamsError("The name of objective function must be 'multi:softprob'.")
+                raise ValueError("The name of objective function must be 'multi:softprob'.")
         else:
             self.model_params["objective"] = "multi:softprob"
 
         if "num_class" not in self.model_params:
-            raise ParamsError("The parameter of 'num_class' must be included.")
+            raise ValueError("The parameter of 'num_class' must be included.")
 
     def train(self, dtrain):
         # Firstly check the args
         _check_params()
         # Is DMatrix
         if not isinstance(dtrain, xgb.DMatrix):
-            raise ParamsError("The type of dtrain must be 'xgb.DMatrix'")
+            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
 
         self._model = xgb.Booster(self.model_params, [dtrain])
         for _ in range(self.num_rounds):
@@ -93,7 +93,7 @@ class model(object):
         _check_params()
         # Is DMatrix
         if not isinstance(dtrain, xgb.DMatrix):
-            raise ParamsError("The type of dtrain must be 'xgb.DMatrix'")
+            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
         # Logging for result
         eval_result = {'td-CI': [], 'Loss': []}
         self._model = xgb.Booster(self.model_params, [dtrain])
@@ -119,7 +119,7 @@ class model(object):
 
     def predict(self, ddata):
         if not isinstance(ddata, xgb.DMatrix):
-            raise ParamsError("The type of dtrain must be 'xgb.DMatrix'")
+            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
         # Returns numpy.array
         preds = self._model.predict(ddata)
         return preds

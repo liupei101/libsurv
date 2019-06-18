@@ -5,6 +5,20 @@ from .base import survival_statistics
 from .base import survival_df
 from .base import survival_dmat
 
+__ALL__ = [
+    "survival_statistics",
+    "survival_df",
+    "survival_dmat",
+    "load_simulated_data",
+    "load_metabric",
+    "load_metabric_train",
+    "load_metabric_test",
+    "load_whas",
+    "load_whas_train",
+    "load_whas_test",
+    "SimulatedData"
+]
+
 def _load_dataset(filename, **kwargs):
     """
     Load a dataset from libsurv.datasets

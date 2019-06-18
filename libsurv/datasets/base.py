@@ -27,17 +27,17 @@ def survival_statistics(data, t_col="t", e_col="e", plot=False):
     if plot:
         import matplotlib.pyplot as plt
         from lifelines import KaplanMeierFitter
-		from lifelines.plotting import add_at_risk_counts
-		fig, ax = plt.subplots(figsize=(8, 6))
-		kmfh = KaplanMeierFitter()
+        from lifelines.plotting import add_at_risk_counts
+        fig, ax = plt.subplots(figsize=(8, 6))
+        kmfh = KaplanMeierFitter()
         kmfh.fit(data[t_col], event_observed=data[e_col], label="Survival Curve")
         kmfh.survival_function_.plot(ax=ax)
         plt.ylim(0, 1.01)
-	    plt.xlabel("Time")
-	    plt.ylabel("Probalities")
-	    plt.legend(loc="best")
-	    add_at_risk_counts(kmfh, ax=ax)
-	    plt.show()
+        plt.xlabel("Time")
+        plt.ylabel("Probalities")
+        plt.legend(loc="best")
+        add_at_risk_counts(kmfh, ax=ax)
+        plt.show()
 
 def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dmat=False):
     """
@@ -46,7 +46,7 @@ def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dm
 
     Parameters
     ----------
-	data: pandas.DataFrame
+    data: pandas.DataFrame
         Survival data to be transformed.
     t_col: str
         Column name in data indicating time.

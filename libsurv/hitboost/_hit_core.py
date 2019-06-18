@@ -1,26 +1,4 @@
 """Custom loss function and corresponding gradients in HitBoost model.
-
-----------
-Parameters
-----------
-
-preds
------
-numpy.array with shape of (N, K), where N = #data, K = #classes.
-K denotes the number of class, which is declared in the parameter "num_class" 
-of XGBoost model.
-In this application, K denotes the number of different time point, and `preds` 
-denotes the probability distribution of time when individual i occurs event.
-
-dtrain
-------
-DMatrix object with training data. labels can be obtained by: 
-labels = dtrain.get_label(), and labels is np.array with shape of (N, ), where
-N = #data.
-
-In this way, absolute value of label represents T in survival data, 
-Negtive values are considered right censored, i.e. E = 0; Positive values are 
-considered event occurrence, i.e. E = 1.
 """
 import numpy as np
 
@@ -31,7 +9,19 @@ global _gamma
 
 def _global_init(tval, gval):
     """
-    initialization of global variables.
+    Initializer for global args.
+
+    Parameters
+    ----------
+    tval: float
+        a value of `_theta` that indicates a coefficient in the objective function.
+
+    gval: float
+        a value of `_gamma` that indicates a parameter in the CI term of objective function.
+
+    Notes
+    -----
+    Global variables assignment.
     """
     global _gamma, _theta
     _theta = tval
@@ -40,6 +30,31 @@ def _global_init(tval, gval):
 def hit_loss(preds, dtrain):
     """
     Computation of Objective Function
+
+    Parameters
+    ----------
+    preds: numpy.array
+        An array with shape of (N, K), where N = #data, K = #classes. K denotes the number 
+        of class, which is declared by the parameter "num_class" in XGBoost model.
+
+    dtrain: xgboost.DMatrix
+        Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
+        `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
+
+    Returns
+    -------
+
+    tuple:
+        Name and value of objective function defined in HitBoost model.
+
+
+    Notes
+    -----
+    In this application, `K` denotes the number of different time point, and `preds` denotes 
+    the probability distribution of time when individual `i` occurs event.
+
+    Absolute value of label represents `T` in survival data, Negtive values are considered 
+    right censored, i.e. `E = 0`; Positive values are considered event occurrence, i.e. `E = 1`.
     """
     # np.array with shape of (N, k)
     yhat = preds
@@ -71,6 +86,27 @@ def hit_loss(preds, dtrain):
 def hit_tdci(preds, dtrain):
     """
     Computation of Time-Dependent Concordance Index
+
+    Parameters
+    ----------
+    preds: numpy.array
+        An array with shape of (N, K), where N = #data, K = #classes. K denotes the number 
+        of class, which is declared by the parameter "num_class" in XGBoost model.
+
+    dtrain: xgboost.DMatrix
+        Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
+        `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
+
+    Returns
+    -------
+
+    tuple:
+        Name of metrics and its value of Time-Dependent Concordance Index.
+        
+
+    Notes
+    -----
+    See notes of `hit_loss`
     """
     # np.array with shape of (N, k)
     yhat = preds
@@ -90,9 +126,31 @@ def hit_tdci(preds, dtrain):
 
 def _hit_grads(preds, dtrain):
     """
-    Gradient Computation of custom objective function.
-    For high speed running, the implementation utilizes built-in function 
-    in `numpy` as much as possible (at the cost of readability).
+    Gradient computation of custom objective function.
+
+    Parameters
+    ----------
+    preds: numpy.array
+        An array with shape of (N, K), where N = #data, K = #classes. K denotes the number 
+        of class, which is declared by the parameter "num_class" in XGBoost model.
+
+    dtrain: xgboost.DMatrix
+        Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
+        `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
+
+    Returns
+    -------
+
+    tuple:
+        The first- and second-order gradients of objective function w.r.t. `preds`.
+
+        
+    Notes
+    -----
+    See notes of `hit_loss`.
+
+    For efficiency, the implementation utilizes built-in function 
+    in `numpy` as much as possible (maybe at the cost of readability).
     """
     # np.array with shape of (N, k)
     yhat = preds

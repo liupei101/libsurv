@@ -1,7 +1,16 @@
+"""HitBoost class statement
+"""
 import xgboost as xgb
 from ._hit_core import *
 
 def _hit_eval(model, eval_data=[]):
+    """
+    Evaluate result on each iteration.
+
+    Notes
+    -----
+    Only for `learning_curve` method of HitBoost. 
+    """
     loss_list = []
     ci_list = []
     for d in eval_data:
@@ -13,6 +22,13 @@ def _hit_eval(model, eval_data=[]):
     return loss_list, ci_list
 
 def _print_eval(iters_num, loss_list, ci_list):
+    """
+    Print evaluation result on each iteration.
+
+    Notes
+    -----
+    Only for `learning_curve` method of HitBoost. 
+    """
     print("# After %dth iteration:" % iters_num)
     for i in range(len(loss_list)):
         print("\tOn %d-th data:" % (i + 1))
@@ -20,13 +36,18 @@ def _print_eval(iters_num, loss_list, ci_list):
         print("\t\ttd-CI: %g" % ci_list[i])
 
 class model(object):
-    """Fitting hit boosting model."""
+    """HitBoost model"""
     def __init__(self, model_params, num_rounds=100, 
              loss_alpha=1.0, loss_gamma=0.01):
         """
-        model_params: `dict`
+        Class initialization.
+
+        Parameters
+        ----------
+        model_params: dict
             Parameters of xgboost multi-classification model.
-            
+            See more in `Reference <https://xgboost.readthedocs.io/en/latest/parameter.html>`.
+
             For example:
                 params = 
                 {
@@ -43,14 +64,18 @@ class model(object):
                     'seed': 42
                 }
 
-        num_rounds: `int`
+        num_rounds: int
             The number of iterations.
 
-        loss_alpha: `float`
+        loss_alpha: float
             The coefficient in objective function.
 
-        loss_gamma: `float`
+        loss_gamma: float
             The parameter in L2 term.
+
+        Notes
+        -----
+        The type of objective must be `multi:softprob` and 'num_class' is necessary.
         """
         super(model, self).__init__()
         # initialize global params
@@ -60,6 +85,9 @@ class model(object):
         self._model = None
 
     def _check_params(self):
+        """
+        Check `model_params` and raise errors.
+        """
         if "objective" in self.model_params:
             if self.model_params["objective"] != "multi:softprob":
                 raise ValueError("The name of objective function must be 'multi:softprob'.")
@@ -70,6 +98,15 @@ class model(object):
             raise ValueError("The parameter of 'num_class' must be included.")
 
     def train(self, dtrain):
+        """
+        HitBoost model training.
+
+        Parameters
+        ----------
+        dtrain: xgboost.DMatrix
+            Training data for survival analysis. It's suggested that you utilize tools of 
+            `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
+        """
         # Firstly check the args
         _check_params()
         # Is DMatrix
@@ -89,6 +126,26 @@ class model(object):
             self._model.boost(dtrain, g, h)
 
     def learning_curve(self, dtrain, eval_data, silent=True):
+        """
+        HitBoost model training and watching learning curve on evaluation set.
+
+        Parameters
+        ----------
+        dtrain: xgboost.DMatrix
+            Training data for survival analysis. It's suggested that you utilize tools of 
+            `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
+
+        eval_data: list
+            Evaluation set to watch learning curve.
+
+        silent: boolean
+            Keep silence or print information.
+
+        Returns
+        -------
+        dict:
+            Evaluation result during training, which is formatted as `{'td-CI': [], 'Loss': []}`.
+        """
         # Firstly check the args
         _check_params()
         # Is DMatrix
@@ -118,6 +175,20 @@ class model(object):
         return eval_result
 
     def predict(self, ddata):
+        """
+        Prediction method.
+
+        Parameters
+        ----------
+        ddata: xgboost.DMatrix
+            Test data for survival analysis. It's suggested that you utilize tools of 
+            `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
+
+        Returns
+        -------
+        numpy.array
+            prediction with shape of `(N, k)`.
+        """
         if not isinstance(ddata, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
         # Returns numpy.array
@@ -125,5 +196,13 @@ class model(object):
         return preds
 
     def save_model(self, file_path):
+        """
+        Model saving.
+
+        Parameters
+        ----------
+        file_path: str
+            Path for local model saving.
+        """
         # Model saving
         self._model.save_model(file_path)

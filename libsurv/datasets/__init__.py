@@ -1,12 +1,12 @@
 import pandas as pd
 
 from .data_simulator import SimulatedData
-from .base import survival_statistics
+from .base import survival_stats
 from .base import survival_df
 from .base import survival_dmat
 
 __ALL__ = [
-    "survival_statistics",
+    "survival_stats",
     "survival_df",
     "survival_dmat",
     "load_simulated_data",

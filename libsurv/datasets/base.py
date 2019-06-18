@@ -1,7 +1,7 @@
 """Survival datasets preview or pre-processing module.
 """
 
-def survival_statistics(data, t_col="t", e_col="e", plot=False):
+def survival_stats(data, t_col="t", e_col="e", plot=False):
     """
     Print statistics of survival data to stdout.
 

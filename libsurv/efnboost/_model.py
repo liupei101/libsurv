@@ -1,4 +1,4 @@
-"""EfnBoost model
+"""EfnBoost module
 """
 import xgboost as xgb
 from ._efn_core import *

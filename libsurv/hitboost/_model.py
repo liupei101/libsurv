@@ -1,4 +1,4 @@
-"""HitBoost class statement
+"""HitBoost module
 """
 import xgboost as xgb
 from ._hit_core import *

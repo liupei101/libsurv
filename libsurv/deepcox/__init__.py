@@ -49,3 +49,29 @@ def _check_surv_data(surv_data):
         raise KeyError("Data must be a dict and takes 'X' and 'Y' as its keys.")
     if not isinstance(surv_data["Y"], pd.DataFrame) or len(surv_data["Y"].columns) != 1:
         raise ValueError("The label of data must be DataFrame and contains only one column.")
+
+def _surv_data_process(surv_data):
+    """
+    process the survival data. The surv_data will be sorted by abs(`Y`) DESC.
+
+    Parameters
+    ----------
+    surv_data: dict
+        Survival data to be trained in neural network.
+
+    Returns
+    -------
+    tuple
+        sorted indices in `surv_data` and sorted DataFrame.
+
+    Notes
+    -----
+    For ensuring the correctness of breslow function computation, survival data
+    must be sorted by observed time (DESC).
+    """
+    _check_surv_data(surv_data)
+    # sort by T desc
+    T = np.abs(np.array(surv_data["Y"]))
+    sorted_idx = np.argsort(T)
+    sorted_data = {"X": surv_data["X"].iloc[sorted_idx, :], "Y": surv_data["Y"].iloc[sorted_idx, :]}
+    return sorted_idx, sorted_data

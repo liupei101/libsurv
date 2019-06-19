@@ -1,25 +1,20 @@
 import os
 import tensorflow as tf
 
-from . import _check_config, _batch_gen, _check_surv_data, _safe_mkdir
+from . import _check_config, _check_surv_data, _prepare_surv_data
+from ..utils import plot_train_curve, concordance_index
 
 class model(object):
     """docstring for model"""
-    def __init__(self, data, batch_size, input_nodes, hidden_layers_nodes, config={}):
+    def __init__(self, input_nodes, hidden_layers_nodes, config={}):
         """
         DeepCox Neural Network Class Constructor.
 
         Parameters
         ----------
-        data: dict
-            Survival dataset follows the format {"X": DataFrame, "Y": DataFrame}.
-            It's suggested that you utilize `libsurv.datasets.survival_df` to obtain 
-            the DataFrame object and then construct the target dict.
-        batch_size: int
-            The number of samples used in each iteration of training.
         input_nodes: int
             The number of input nodes. It's also equal to the number of features.
-        hidden_layers_nodes:
+        hidden_layers_nodes: list
             Number of nodes in hidden layers of neural network.
         config: dict
             Some configurations or hyper-parameters of neural network.
@@ -36,13 +31,10 @@ class model(object):
             }
         """
         super(model, self).__init__()
-        # dataset
-        _check_surv_data(data)
-        self.raw_data = data
-        self.batch_size = batch_size
         # neural nodes
         self.input_nodes = input_nodes
         self.hidden_layers_nodes = hidden_layers_nodes
+        assert hidden_layers_nodes[-1] == 1
         # network hyper-parameters
         _check_config(config)
         self.config = config
@@ -51,22 +43,11 @@ class model(object):
         # some gobal settings
         self.global_step = tf.get_variable('global_step', initializer=tf.constant(0), trainable=False)
         self.keep_prob = tf.placeholder(tf.float32)
-
-    def _gen(self):
-        yield from _batch_gen(self.raw_data, self.batch_size)
-
-    def _import_data(self):
-        self.dataset = tf.data.Dataset.from_generator(
-            self._gen, 
-            (tf.float32, tf.float32), 
-            (tf.TensorShape([self.batch_size, self.input_nodes]), 
-             tf.TensorShape([self.batch_size]))
-        )
-        with tf.name_scope("data"):
-            self.iterator = self.dataset.make_initializable_iterator()
-            # self.X with shape of (batch_size, m), m = input_nodes
-            # self.Y with shape of (batch_size, )
-            self.X, self.Y = self.iterator.get_next()
+        
+        # It's the best way to use `tf.placeholder` instead of `tf.data.Dataset`.
+        # Since style of `batch` is not appropriate in survival analysis.
+        self.X = tf.placeholder(tf.float32, [None, input_nodes], name='X-Input')
+        self.Y = tf.placeholder(tf.float32, [None, 1], name='Y-Input')
 
     def _create_fc_layer(self, x, output_dim, scope):
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
@@ -104,8 +85,7 @@ class model(object):
             for i, num_nodes in enumerate(self.hidden_layers_nodes):
                 cur_x = self._create_fc_layer(cur_x, num_nodes, "layer"+str(i+1))
             # output of network
-            # squeeze output from shape of (batch_size, 1) to (batch_size, )
-            self.Y_hat = tf.squeeze(cur_x)
+            self.Y_hat = cur_x
 
     def _create_loss(self):
         """
@@ -120,10 +100,12 @@ class model(object):
         with tf.name_scope("loss"):
             # Obtain T and E from self.Y
             # NOTE: negtive value means E = 0
-            Y_label_T = tf.abs(self.Y)
-            Y_label_E = tf.cast(tf.greater(self.Y, 0), dtype=tf.float32)
+            Y_c = tf.squeeze(self.Y)
+            Y_hat_c = tf.squeeze(self.Y_hat)
+            Y_label_T = tf.abs(Y_c)
+            Y_label_E = tf.cast(tf.greater(Y_c, 0), dtype=tf.float32)
 
-            Y_hat_hr = tf.exp(self.Y_hat)
+            Y_hat_hr = tf.exp(Y_hat_c)
             Y_hat_cumsum = tf.log(tf.cumsum(Y_hat_hr))
             
             # Start Computation of Loss function
@@ -137,7 +119,7 @@ class model(object):
             # Compute S2
             loss_s2 = tf.reduce_sum(tf.multiply(loss_s2_v, loss_s2_count))
             # Compute S1
-            loss_s1 = tf.reduce_sum(tf.multiply(Y_hat, Y_label_E))
+            loss_s1 = tf.reduce_sum(tf.multiply(Y_hat_c, Y_label_E))
             # Compute Breslow Loss
             loss_breslow = tf.subtract(loss_s2, loss_s1)
 
@@ -169,70 +151,146 @@ class model(object):
         else:
             raise NotImplementedError('Optimizer not recognized')
 
-    def _create_summaries(self):
-        with tf.name_scope('summaries'):
-            tf.summary.scalar('loss', self.loss)
-            tf.summary.histogram('histogram loss', self.loss)
-            # because you have several summaries, we should merge them all
-            # into one op to make it easier to manage
-            self.summary_op = tf.summary.merge_all()
-
     def build_graph(self):
         """Build graph of DeepCox
         """
-        self._import_data()
         self._create_network()
         self._create_loss()
         self._create_optimizer()
-        self._create_summaries()
 
-    def train(self, num_steps, num_skip_steps):
+    def start_session(self):
+        self.sess = tf.Session()
+
+    def close_session(self):
+        self.sess.close()
+        print("Current session closed.")
+
+    def train(self, data, num_steps, num_skip_steps, load_model="", save_model="", plot=True):
         """
         Training DeepCox model.
 
         Parameters
         ----------
+        data: dict
+            Survival dataset follows the format {"X": DataFrame, "Y": DataFrame}.
+            It's suggested that you utilize `libsurv.datasets.survival_df` to obtain 
+            the DataFrame object and then construct the target dict.
         num_steps: int
             The number of training steps.
         num_skip_steps: int
             The number of skipping training steps. Model would be saved after 
             each `num_skip_steps`.
-
-        Notes
-        -----
-        This method will write graph definition to the directory `./graph` and save model 
-        to the directory `./checkpoints`. Please use `tensorboard` tools to watch the model.
+        load_model: string
+            Path for loading model.
+        save_model: string
+            Path for saving model.
+        plot: boolean
+            Is plot the learning curve.
         """
-        saver = tf.train.Saver() # defaults to saving all variables
+        # dataset pre-processing
+        self.indices, self.train_data = _prepare_surv_data(data)
 
-        initial_step = 0
-        _safe_mkdir('checkpoints')
-        # Session Running 
-        with tf.Session() as sess:
-            sess.run(self.iterator.initializer)
-            sess.run(tf.global_variables_initializer())
-            ckpt = tf.train.get_checkpoint_state(os.path.dirname('checkpoints/checkpoint'))
+        # data to feed
+        feed_data = {
+            self.keep_prob: self.config['dropout_keep_prob'],
+            self.X: self.train_data['X'].values,
+            self.Y: self.train_data['Y'].values
+        }
 
-            # if that checkpoint exists, restore from checkpoint
-            if ckpt and ckpt.model_checkpoint_path:
-                saver.restore(sess, ckpt.model_checkpoint_path)
+        # Session Running
+        self.sess.run(tf.global_variables_initializer())
+        if load_model != "":
+            saver = tf.train.Saver()
+            saver.restore(self.sess, load_model)
 
-            total_loss = 0.0 # we use this to calculate late average loss in the last SKIP_STEP steps
-            writer = tf.summary.FileWriter('graphs/lr' + str(self.config["learning_rate"]), sess.graph)
-            # Get current global step
-            initial_step = self.global_step.eval()
+        # we use this to calculate late average loss in the last SKIP_STEP steps
+        total_loss = 0.0
+        # Get current global step
+        initial_step = self.global_step.eval()
+        # Record evaluations during training
+        watch_list = {'loss': [], 'metrics': []}
+        for index in range(initial_step, initial_step + num_steps):
+            y_hat, loss_value, _ = self.sess.run([self.Y_hat, self.loss, self.optimizer], feed_dict=feed_data)
+            # append values
+            watch_list['loss'].append(loss_value)
+            watch_list['metrics'].append(concordance_index(self.train_data['Y'].values, y_hat))
+            total_loss += loss_value
+            if (index + 1) % num_skip_steps == 0:
+                print('Average loss at step {}: {:5.1f}'.format(index, total_loss / num_skip_steps))
+                total_loss = 0.0
 
-            for index in range(initial_step, initial_step + num_steps):
-                try:
-                    loss_batch, _, summary = sess.run([self.loss, self.optimizer, self.summary_op]
-                                                      feed_dict={self.keep_prob: self.config['dropout_keep_prob']})
-                    writer.add_summary(summary, global_step=index)
-                    total_loss += loss_batch
-                    if (index + 1) % num_skip_steps == 0:
-                        print('Average loss at step {}: {:5.1f}'.format(index, total_loss / num_skip_steps))
-                        total_loss = 0.0
-                        saver.save(sess, 'checkpoints/deepcox', index)
-                except tf.errors.OutOfRangeError:
-                    sess.run(self.iterator.initializer)
-            writer.close()
-            
+        # we only save the final trained model
+        if save_model != "":
+            # defaults to saving all variables
+            saver = tf.train.Saver()
+            saver.save(self.sess, save_model)
+        # plot learning curve
+        if plot:
+            plot_train_curve(watch_list['loss'], "Loss function")
+            plot_train_curve(watch_list['metrics'], "Concordance index")
+
+        return watch_list
+
+    def predict(self, X, output_margin=True):
+        """
+        Predict log hazard ratio using trained model.
+
+        Parameters
+        ----------
+        X : DataFrame
+            Input data with covariate variables, shape of which is (n, input_nodes).
+
+        Returns
+        -------
+        np.array
+            Predicted log hazard ratio of samples, shape of which is (n, 1). 
+
+        Examples
+        --------
+        >>> # "array([[0.3], [1.88], [-0.1], ..., [0.98]])"
+        >>> model.predict(test_X)
+        """
+        # we set dropout to 1.0 when making prediction
+        log_hr = self.sess.run([self.Y_hat], feed_dict={self.X: X.values, self.keep_prob: 1.0})
+        if output_margin == False:
+            return np.exp(log_hr)
+        return log_hr
+
+    def evals(self, data):
+        """
+        Evaluate labeled dataset using the CI metrics under current trained model.
+
+        Parameters
+        ----------
+        data: dict
+            Survival dataset follows the format {"X": DataFrame, "Y": DataFrame}.
+            It's suggested that you utilize `libsurv.datasets.survival_df` to obtain 
+            the DataFrame object and then construct the target dict.
+
+        Returns
+        -------
+        float
+            CI metrics on your dataset.
+        """
+        _check_surv_data(data)
+        preds = self.predict(data['X'])
+        return concordance_index(data['Y'].values, preds)
+
+    def predict_survival_function(self, X):
+        """
+        Predict survival function of samples.
+
+        Parameters
+        ----------
+        X: DataFrame
+            Input data with covariate variables, shape of which is (n, input_nodes).
+
+        Returns
+        -------
+        np.array
+            Predicted survival function of samples, shape of which is (n, #Time_Points). 
+        """
+        pred_hr = self.predict(X, output_margin=False)
+        # TODO
+        pass
+        

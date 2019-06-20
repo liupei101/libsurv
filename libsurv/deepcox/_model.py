@@ -1,8 +1,11 @@
 import os
 import tensorflow as tf
 
-from . import _check_config, _check_surv_data, _prepare_surv_data
-from ..utils import plot_train_curve, concordance_index
+from . import _check_config
+from . import _check_surv_data 
+from . import _prepare_surv_data
+from ..utils import plot_train_curve, plot_surv_curve
+from ..utils import concordance_index, baseline_survival_function
 
 class model(object):
     """docstring for model"""
@@ -157,24 +160,21 @@ class model(object):
         self._create_network()
         self._create_loss()
         self._create_optimizer()
-
-    def start_session(self):
         self.sess = tf.Session()
 
     def close_session(self):
         self.sess.close()
         print("Current session closed.")
 
-    def train(self, data, num_steps, num_skip_steps, load_model="", save_model="", plot=True):
+    def train(self, data_X, data_y, num_steps, num_skip_steps, load_model="", save_model="", plot=False):
         """
         Training DeepCox model.
 
         Parameters
         ----------
-        data: dict
-            Survival dataset follows the format {"X": DataFrame, "Y": DataFrame}.
-            It's suggested that you utilize `libsurv.datasets.survival_df` to obtain 
-            the DataFrame object and then construct the target dict.
+        data_X, data_y: DataFrame
+            Covariates and labels of survival data. It's suggested that you utilize 
+            `libsurv.datasets.survival_df` to obtain the DataFrame object.
         num_steps: int
             The number of training steps.
         num_skip_steps: int
@@ -185,16 +185,16 @@ class model(object):
         save_model: string
             Path for saving model.
         plot: boolean
-            Is plot the learning curve.
+            Plot the learning curve.
         """
         # dataset pre-processing
-        self.indices, self.train_data = _prepare_surv_data(data)
+        self.indices, self.train_data_X, self.train_data_y = _prepare_surv_data(data_X, data_y)
 
         # data to feed
         feed_data = {
             self.keep_prob: self.config['dropout_keep_prob'],
-            self.X: self.train_data['X'].values,
-            self.Y: self.train_data['Y'].values
+            self.X: self.train_data_X.values,
+            self.Y: self.train_data_y.values
         }
 
         # Session Running
@@ -213,7 +213,7 @@ class model(object):
             y_hat, loss_value, _ = self.sess.run([self.Y_hat, self.loss, self.optimizer], feed_dict=feed_data)
             # append values
             watch_list['loss'].append(loss_value)
-            watch_list['metrics'].append(concordance_index(self.train_data['Y'].values, y_hat))
+            watch_list['metrics'].append(concordance_index(self.train_data_y.values, y_hat))
             total_loss += loss_value
             if (index + 1) % num_skip_steps == 0:
                 print('Average loss at step {}: {:5.1f}'.format(index, total_loss / num_skip_steps))
@@ -229,6 +229,12 @@ class model(object):
             plot_train_curve(watch_list['loss'], "Loss function")
             plot_train_curve(watch_list['metrics'], "Concordance index")
 
+        # update the baseline survival function after all training ops
+        self.HR = self.predict(self.train_data_X, output_margin=False)
+        # we estimate the baseline survival function S0(t) using training data
+        # which returns a DataFrame
+        self.BSF = baseline_survival_function(self.train_data_y.values, self.HR)
+
         return watch_list
 
     def predict(self, X, output_margin=True):
@@ -239,11 +245,14 @@ class model(object):
         ----------
         X : DataFrame
             Input data with covariate variables, shape of which is (n, input_nodes).
+        output_margin: boolean
+            If output_margin is set to True, then output of model is log hazard ratio.
+            Otherwise the output is hazard ratio, i.e. exp(beta*x).
 
         Returns
         -------
         np.array
-            Predicted log hazard ratio of samples, shape of which is (n, 1). 
+            Predicted log hazard ratio (or hazard ratio) of samples with shape of (n, 1). 
 
         Examples
         --------
@@ -252,31 +261,30 @@ class model(object):
         """
         # we set dropout to 1.0 when making prediction
         log_hr = self.sess.run([self.Y_hat], feed_dict={self.X: X.values, self.keep_prob: 1.0})
-        if output_margin == False:
-            return np.exp(log_hr)
-        return log_hr
+        if output_margin:
+            return log_hr
+        return np.exp(log_hr)
 
-    def evals(self, data):
+    def evals(self, data_X, data_y):
         """
         Evaluate labeled dataset using the CI metrics under current trained model.
 
         Parameters
         ----------
-        data: dict
-            Survival dataset follows the format {"X": DataFrame, "Y": DataFrame}.
-            It's suggested that you utilize `libsurv.datasets.survival_df` to obtain 
-            the DataFrame object and then construct the target dict.
+        data_X, data_y: DataFrame
+            Covariates and labels of survival data. It's suggested that you utilize 
+            `libsurv.datasets.survival_df` to obtain the DataFrame object.
 
         Returns
         -------
         float
             CI metrics on your dataset.
         """
-        _check_surv_data(data)
-        preds = self.predict(data['X'])
-        return concordance_index(data['Y'].values, preds)
+        _check_surv_data(data_X, data_y)
+        preds = self.predict(data_X)
+        return concordance_index(data_y.values, preds)
 
-    def predict_survival_function(self, X):
+    def predict_survival_function(self, X, plot=False):
         """
         Predict survival function of samples.
 
@@ -284,13 +292,21 @@ class model(object):
         ----------
         X: DataFrame
             Input data with covariate variables, shape of which is (n, input_nodes).
+        plot: boolean
+            Plot the estimated survival curve of samples.
 
         Returns
         -------
-        np.array
-            Predicted survival function of samples, shape of which is (n, #Time_Points). 
+        DataFrame
+            Predicted survival function of samples, shape of which is (n, #Time_Points).
+            `Time_Points` indicates the time point that exists in the training data.
         """
         pred_hr = self.predict(X, output_margin=False)
-        # TODO
-        pass
+        survf = pd.DataFrame(self.BSF.iloc[:, 0].values ** pred_hr, columns=self.BSF.index.values)
+        
+        # plot survival curve
+        if plot:
+            plot_surv_curve(survf)
+
+        return survf
         

@@ -34,30 +34,32 @@ def _check_config(config):
         if k not in config:
             config[k] = default_config[k]
 
-def _check_surv_data(surv_data):
+def _check_surv_data(surv_data_X, surv_data_y):
     """
     Check survival data and raise errors.
 
     Parameters
     ----------
-    surv_data: dict
-        Survival data to be trained in neural network.
+    surv_data_X: DataFrame
+        Covariates of survival data.
+    surv_data_y: DataFrame
+        Labels of survival data. Negtive values are considered right censored.
     """
-    if not isinstance(surv_data, dict):
-        raise TypeError("Type of data must be dict.")
-    if "X" not in surv_data or "Y" not in surv_data:
-        raise KeyError("Data must be a dict and takes 'X' and 'Y' as its keys.")
-    if not isinstance(surv_data["Y"], pd.DataFrame) or len(surv_data["Y"].columns) != 1:
-        raise ValueError("The label of data must be DataFrame and contains only one column.")
+    if not isinstance(surv_data_X, pd.DataFrame):
+        raise TypeError("The type of X must DataFrame.")
+    if not isinstance(surv_data_y, pd.DataFrame) or len(surv_data_y.columns) != 1:
+        raise TypeError("The type of y must be DataFrame and contains only one column.")
 
-def _surv_data_process(surv_data):
+def _prepare_surv_data(surv_data_X, surv_data_y):
     """
-    process the survival data. The surv_data will be sorted by abs(`Y`) DESC.
+    Prepare the survival data. The surv_data will be sorted by abs(`surv_data_y`) DESC.
 
     Parameters
     ----------
-    surv_data: dict
-        Survival data to be trained in neural network.
+    surv_data_X: DataFrame
+        Covariates of survival data.
+    surv_data_y: DataFrame
+        Labels of survival data. Negtive values are considered right censored. 
 
     Returns
     -------
@@ -69,9 +71,8 @@ def _surv_data_process(surv_data):
     For ensuring the correctness of breslow function computation, survival data
     must be sorted by observed time (DESC).
     """
-    _check_surv_data(surv_data)
+    _check_surv_data(surv_data_X, surv_data_y)
     # sort by T desc
-    T = np.abs(np.array(surv_data["Y"]))
+    T = np.abs(np.array(surv_data_y))
     sorted_idx = np.argsort(T)
-    sorted_data = {"X": surv_data["X"].iloc[sorted_idx, :], "Y": surv_data["Y"].iloc[sorted_idx, :]}
-    return sorted_idx, sorted_data
+    return sorted_idx, surv_data_X.iloc[sorted_idx, :], surv_data_y.iloc[sorted_idx, :]

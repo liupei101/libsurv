@@ -1,5 +1,6 @@
 """Survival datasets preview or pre-processing module.
 """
+from .vision import plot_km_survf
 
 def survival_stats(data, t_col="t", e_col="e", plot=False):
     """
@@ -19,25 +20,13 @@ def survival_stats(data, t_col="t", e_col="e", plot=False):
     print("--------------- Survival Data Statistics ---------------")
     N = len(data)
     print("# Rows:", N)
-    print("# Columns: %d + %s + %s" % (len(data.columns), e_col, t_col))
-    print("# Events Ratio: %.2f%%" % 1.0 * data[e_col].sum() / N)
+    print("# Columns: %d + %s + %s" % (len(data.columns) - 2, e_col, t_col))
+    print("# Events Ratio: %.2f%%" % (1.0 * data[e_col].sum() / N))
     print("# Min Time:", data[t_col].min())
     print("# Max Time:", data[t_col].max())
     print("")
     if plot:
-        import matplotlib.pyplot as plt
-        from lifelines import KaplanMeierFitter
-        from lifelines.plotting import add_at_risk_counts
-        fig, ax = plt.subplots(figsize=(8, 6))
-        kmfh = KaplanMeierFitter()
-        kmfh.fit(data[t_col], event_observed=data[e_col], label="Survival Curve")
-        kmfh.survival_function_.plot(ax=ax)
-        plt.ylim(0, 1.01)
-        plt.xlabel("Time")
-        plt.ylabel("Probalities")
-        plt.legend(loc="best")
-        add_at_risk_counts(kmfh, ax=ax)
-        plt.show()
+        plot_km_survf(data, t_col="t", e_col="e")
 
 def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dmat=False):
     """

@@ -1,15 +1,6 @@
-import os
+import numpy as np
 
 from ._model import model
-
-def _safe_mkdir(path):
-    """ 
-    Create a directory if there isn't one already. 
-    """
-    try:
-        os.mkdir(path)
-    except OSError:
-        pass
 
 def _check_config(config):
     """
@@ -73,6 +64,6 @@ def _prepare_surv_data(surv_data_X, surv_data_y):
     """
     _check_surv_data(surv_data_X, surv_data_y)
     # sort by T desc
-    T = np.abs(np.array(surv_data_y))
+    T = np.abs(np.squeeze(np.array(surv_data_y)))
     sorted_idx = np.argsort(T)
     return sorted_idx, surv_data_X.iloc[sorted_idx, :], surv_data_y.iloc[sorted_idx, :]

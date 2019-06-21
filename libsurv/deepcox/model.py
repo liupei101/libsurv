@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 
-from . import _check_config
-from . import _check_surv_data
-from . import _prepare_surv_data
+from ._utils import _check_config
+from ._utils import _check_surv_data
+from ._utils import _prepare_surv_data
 
 from ..utils import concordance_index
 from ..utils import baseline_survival_function
@@ -37,7 +37,7 @@ class model(object):
                 "seed": 42
             }
         """
-        super(dsnn, self).__init__()
+        super(model, self).__init__()
         # neural nodes
         self.input_nodes = input_nodes
         self.hidden_layers_nodes = hidden_layers_nodes

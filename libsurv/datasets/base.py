@@ -1,6 +1,6 @@
 """Survival datasets preview or pre-processing module.
 """
-from .vision import plot_km_survf
+from ..vision import plot_km_survf
 
 def survival_stats(data, t_col="t", e_col="e", plot=False):
     """

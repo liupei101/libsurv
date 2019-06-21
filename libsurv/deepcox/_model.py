@@ -171,7 +171,8 @@ class model(object):
         self.sess.close()
         print("Current session closed.")
 
-    def train(self, data_X, data_y, num_steps, num_skip_steps, load_model="", save_model="", plot=False):
+    def train(self, data_X, data_y, num_steps, num_skip_steps=1, 
+              load_model="", save_model="", plot=False, silent=False):
         """
         Training DeepCox model.
 
@@ -191,6 +192,13 @@ class model(object):
             Path for saving model.
         plot: boolean
             Plot the learning curve.
+        silent: boolean
+            Print infos to screen.
+
+        Returns
+        -------
+        dict
+            Values of C-index and loss function during training.
         """
         # dataset pre-processing
         self.indices, self.train_data_X, self.train_data_y = _prepare_surv_data(data_X, data_y)

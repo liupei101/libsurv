@@ -1,14 +1,17 @@
 import numpy as np
+from pandas import DataFrame
 import matplotlib.pyplot as plt
 
-def plot_train_curve(L, title='Training Curve'):
-    if type(L) == list:
+def plot_train_curve(L, labels=["Learning Curve"], title='Training Curve'):
+    if type(L[0]) != list:
         x = range(1, len(L) + 1)
-        plt.plot(x, L, label="Learning Curve")
-    elif type(L) == dict:
-        for k, v in L.items():
-            x = range(1, len(v) + 1)
-            plt.plot(x, v, label=k)
+        plt.plot(x, L, label=labels[0])
+    else:
+        datasets_size = len(L[0])
+        for i in range(datasets_size):
+            x = range(1, len(L) + 1)
+            v = [m_L[i] for m_L in L]
+            plt.plot(x, v, label=labels[i])
     # no ticks
     plt.xlabel("Steps")
     plt.legend(loc="best")
@@ -21,11 +24,19 @@ def plot_surv_curve(df_survf, title="Survival Curve"):
 
     Parameters
     ----------
-    df_survf: DataFrame
+    df_survf: DataFrame or numpy.array
         Survival function of samples, shape of which is (n, #Time_Points).
         `Time_Points` indicates the time point presented in columns of DataFrame.
+    title: str
+        Title of plot.
     """
-    plt.plot(df_survf.columns.values, np.transpose(df_survf.values))
+    if isinstance(df_survf, DataFrame):
+        plt.plot(df_survf.columns.values, np.transpose(df_survf.values))
+    elif isinstance(df_survf, np.ndarray):
+        plt.plot(np.array([i for i in range(df_survf.shape[1])]), np.transpose(df_survf))
+    else:
+        raise TypeError("Type is not supported.")
+
     plt.title(title)
     plt.show()
 
@@ -44,7 +55,7 @@ def plot_km_survf(data, t_col="t", e_col="e"):
     """
     from lifelines import KaplanMeierFitter
     from lifelines.plotting import add_at_risk_counts
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6, 4))
     kmfh = KaplanMeierFitter()
     kmfh.fit(data[t_col], event_observed=data[e_col], label="KM Survival Curve")
     kmfh.survival_function_.plot(ax=ax)

@@ -1,16 +1,21 @@
 """HitBoost module
 """
 import xgboost as xgb
+import numpy as np
 
-from ._hit_core import *
+from ._hit_core import _global_init
+from ._hit_core import hit_tdci, hit_loss
+from ._hit_core import _hit_grads
+
 from ._utils import _check_params
 from ._utils import _hit_eval
 from ._utils import _print_eval
 
+from ..vision import plot_train_curve, plot_surv_curve
+
 class model(object):
     """HitBoost model"""
-    def __init__(self, model_params, num_rounds=100, 
-                 loss_alpha=1.0, loss_gamma=0.01):
+    def __init__(self, model_params, loss_alpha=1.0, loss_gamma=0.01):
         """
         Class initialization.
 
@@ -36,12 +41,8 @@ class model(object):
                     'seed': 42
                 }
 
-        num_rounds: int
-            The number of iterations.
-
         loss_alpha: float
             The coefficient in objective function.
-
         loss_gamma: float
             The parameter in L2 term.
 
@@ -53,38 +54,9 @@ class model(object):
         # initialize global params
         _global_init(loss_alpha, loss_gamma)
         self.model_params = model_params
-        self.num_rounds = num_rounds
         self._model = None
 
-    def train(self, dtrain):
-        """
-        HitBoost model training.
-
-        Parameters
-        ----------
-        dtrain: xgboost.DMatrix
-            Training data for survival analysis. It's suggested that you utilize tools of 
-            `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
-        """
-        # Firstly check the args
-        _check_params(self.model_params)
-        # Is DMatrix
-        if not isinstance(dtrain, xgb.DMatrix):
-            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
-
-        self._model = xgb.Booster(self.model_params, [dtrain])
-        for _ in range(self.num_rounds):
-            # Note: Since default setting of `output_margin` is `False`,
-            # so the prediction is outputted after softmax transformation.
-            pred = self._model.predict(dtrain)
-            # Note: The gradient you provide for `model.boost()` must be 
-            # gradients of objective function with respect to the direct 
-            # output of boosting tree (even if you set `output_margin` as 
-            # `True`).
-            g, h = _hit_grads(pred, dtrain)
-            self._model.boost(dtrain, g, h)
-
-    def learning_curve(self, dtrain, eval_data, silent=True):
+    def train(self, dtrain, num_rounds=100, skip_rounds=10, eval_data=[], silent=False, plot=False):
         """
         HitBoost model training and watching learning curve on evaluation set.
 
@@ -93,27 +65,42 @@ class model(object):
         dtrain: xgboost.DMatrix
             Training data for survival analysis. It's suggested that you utilize tools of 
             `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
-
+        num_rounds: int
+            The number of iterations.
+        skip_rounds: int
+            The number of skipped rounds if you want to print infos.
         eval_data: list
-            Evaluation set to watch learning curve.
-
+            Evaluation set to watch learning curve. If it is set as an empty list by default, 
+            then the training data will became the evaluation set.
         silent: boolean
             Keep silence or print information.
+        plot: boolean
+            Plot learning curve.
 
         Returns
         -------
         dict:
             Evaluation result during training, which is formatted as `{'td-CI': [], 'Loss': []}`.
         """
-        # Firstly check the args
+        # First to check the args
         _check_params(self.model_params)
-        # Is DMatrix
+
         if not isinstance(dtrain, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
+
+        if len(eval_data) == 0:
+            eval_labels = ['train']
+            eval_datas = [dtrain]
+        else:
+            if not isinstance(eval_data[0], tuple):
+                raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
+            eval_labels = [c[0] for c in eval_data]
+            eval_datas = [c[1] for c in eval_data]
+        
         # Logging for result
         eval_result = {'td-CI': [], 'Loss': []}
         self._model = xgb.Booster(self.model_params, [dtrain])
-        for _ in range(self.num_rounds):
+        for _ in range(num_rounds):
             # Note: Since default setting of `output_margin` is `False`,
             # so the prediction is outputted after softmax transformation.
             pred = self._model.predict(dtrain)
@@ -124,12 +111,18 @@ class model(object):
             g, h = _hit_grads(pred, dtrain)
             self._model.boost(dtrain, g, h)
             # Append to eval_result
-            if len(eval_data) > 0:
-                res_loss, res_ci = _hit_eval(model, eval_data)
+            if len(eval_datas) > 0:
+                # returns a list of values
+                res_loss, res_ci = _hit_eval(self._model, eval_datas)
                 eval_result['Loss'].append(res_loss)
                 eval_result['td-CI'].append(res_ci)
-                if not silent:
-                    _print_eval(_ + 1, res_loss, res_ci)
+                if not silent and (_ + 1) % skip_rounds == 0:
+                    _print_eval(_ + 1, res_loss, res_ci, eval_labels)
+
+        # plot learning curve
+        if plot:
+            plot_train_curve(eval_result['Loss'], eval_labels, "Loss function")
+            plot_train_curve(eval_result['td-CI'], eval_labels, "Time-Dependent C-index")
 
         return eval_result
 
@@ -146,13 +139,57 @@ class model(object):
         Returns
         -------
         numpy.array
-            prediction with shape of `(N, k)`.
+            prediction of P.D.F. of FHT with shape of `(N, k)`.
         """
         if not isinstance(ddata, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
         # Returns numpy.array
         preds = self._model.predict(ddata)
         return preds
+
+    def predict_survival_function(self, ddata, plot=False):
+        """
+        Prediction method.
+
+        Parameters
+        ----------
+        ddata: xgboost.DMatrix
+            Test data for survival analysis. It's suggested that you utilize tools of 
+            `datasets` module to convert pd.DataFrame to xgboost.DMatrix.
+        plot: boolean
+            Plot the predicted survival function.
+
+        Returns
+        -------
+        numpy.array
+            prediction of survival function with shape of `(N, 1+k)`.
+        """
+        pred = self.predict(ddata)
+        pred_surv = 1.0 - np.cumsum(pred, axis=1)
+        pred_surv = np.insert(pred_surv, 0, values=np.ones(pred_surv.shape[0]), axis=1)
+
+        # plot survival curve.
+        if plot:
+            plot_surv_curve(pred_surv)
+
+        return pred_surv
+
+    def evals(self, ddata):
+        """
+        evaluation performance of trained model on data.
+
+        Parameters
+        ----------
+        ddata: xgboost.DMatrix
+            Test data for survival analysis.
+
+        Returns
+        -------
+        float
+            Time-Dependent C-index.
+        """
+        preds = self.predict(ddata)
+        return hit_tdci(preds, ddata)[1]
 
     def save_model(self, file_path):
         """

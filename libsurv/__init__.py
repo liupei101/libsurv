@@ -2,7 +2,10 @@ from .efnboost import model as EfnBoost
 from .hitboost import model as HitBoost
 from .deepcox import model as DeepCox
 
+from .version import __version__
+
 __ALL__ = [
+    "__version__",
     "EfnBoost",
     "HitBoost",
     "DeepCox"

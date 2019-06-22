@@ -1,3 +1,5 @@
+from ._hit_core import hit_tdci, hit_loss
+
 def _check_params(model_params):
     """
     Check `model_params` and raise errors.
@@ -11,13 +13,13 @@ def _check_params(model_params):
     if "num_class" not in model_params:
         raise ValueError("The parameter of 'num_class' must be included.")
 
-def _hit_eval(model, eval_data=[]):
+def _hit_eval(model, eval_data):
     """
     Evaluate result on each iteration.
 
     Notes
     -----
-    Only for `learning_curve` method of HitBoost. 
+    Only for `train` method of HitBoost. 
     """
     loss_list = []
     ci_list = []
@@ -29,16 +31,16 @@ def _hit_eval(model, eval_data=[]):
         ci_list.append(civ)
     return loss_list, ci_list
 
-def _print_eval(iters_num, loss_list, ci_list):
+def _print_eval(iters_num, loss_list, ci_list, eval_labels):
     """
     Print evaluation result on each iteration.
 
     Notes
     -----
-    Only for `learning_curve` method of HitBoost. 
+    Only for `train` method of HitBoost. 
     """
     print("# After %dth iteration:" % iters_num)
     for i in range(len(loss_list)):
-        print("\tOn %d-th data:" % (i + 1))
+        print("\tOn %s:" % eval_labels[i])
         print("\t\tLoss: %g" % loss_list[i])
         print("\t\ttd-CI: %g" % ci_list[i])

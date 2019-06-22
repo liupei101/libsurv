@@ -1,4 +1,5 @@
 import pandas as pd
+from pkg_resources import resource_filename
 
 from .data_simulator import SimulatedData
 from .base import survival_stats

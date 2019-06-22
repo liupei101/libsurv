@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include MANIFEST.in
+
+include *.ipynb
+
+recursive-include libsurv *
+recursive-include datasets *
+
+recursive-exclude * *.py[co]

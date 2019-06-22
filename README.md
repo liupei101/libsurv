@@ -8,6 +8,15 @@ A library of efficient survival analysis models, including DeepCox, HitBoost and
 - `HitBoost`: Survival analysis via a multi-output gradient boosting decision tree method.
 - `EfnBoost`: Optimized cox proportional hazard model via an objective function of Efron approximation.
 
+## Installation
+
+```bash
+# in the directory where `setup.py` is located
+ls
+# install via pip or pip3 (only support for python>=3.5)
+pip3 install .
+```
+
 ## Usage
 
 Usage of `DeepCox`, `EfnBoost` and `HitBoost` are provided in [Jupyter Notebooks](examples/).

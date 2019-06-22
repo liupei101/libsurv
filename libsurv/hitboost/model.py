@@ -4,8 +4,8 @@ import xgboost as xgb
 import numpy as np
 
 from ._hit_core import _global_init
-from ._hit_core import hit_tdci, hit_loss
 from ._hit_core import _hit_grads
+from ._hit_core import hit_tdci, hit_loss
 
 from ._utils import _check_params
 from ._utils import _hit_eval
@@ -17,7 +17,7 @@ class model(object):
     """HitBoost model"""
     def __init__(self, model_params, loss_alpha=1.0, loss_gamma=0.01):
         """
-        Class initialization.
+        HitBoost Model Constructor.
 
         Parameters
         ----------
@@ -48,7 +48,7 @@ class model(object):
 
         Notes
         -----
-        The type of objective must be `multi:softprob` and 'num_class' is necessary.
+        The type of objective must be `multi:softprob` and the 'num_class' is necessary.
         """
         super(model, self).__init__()
         # initialize global params
@@ -58,7 +58,7 @@ class model(object):
 
     def train(self, dtrain, num_rounds=100, skip_rounds=10, eval_data=[], silent=False, plot=False):
         """
-        HitBoost model training and watching learning curve on evaluation set.
+        HitBoost model training or watching learning curve on evaluation set.
 
         Parameters
         ----------
@@ -138,11 +138,11 @@ class model(object):
 
         Returns
         -------
-        numpy.array
+        numpy.ndarray
             prediction of P.D.F. of FHT with shape of `(N, k)`.
         """
         if not isinstance(ddata, xgb.DMatrix):
-            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
+            raise TypeError("The type of data must be 'xgboost.DMatrix'")
         # Returns numpy.array
         preds = self._model.predict(ddata)
         return preds
@@ -161,7 +161,7 @@ class model(object):
 
         Returns
         -------
-        numpy.array
+        numpy.ndarray
             prediction of survival function with shape of `(N, 1+k)`.
         """
         pred = self.predict(ddata)

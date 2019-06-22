@@ -40,5 +40,5 @@ setup(name=pkg_name,
         'lifelines>=0.14.6',
         'xgboost>=0.82',
     ],
-    package_data={pkg_name: ["../README.md", "../LICENSE", "../MANIFEST.in", "datasets/src/*"]},
+    include_package_data=True,
 )

@@ -54,7 +54,7 @@ def _prepare_surv_data(surv_data_X, surv_data_y):
     Returns
     -------
     tuple
-        sorted indices in `surv_data` and sorted DataFrame.
+        sorted indices in `surv_data` and sorted DataFrame of X and y.
 
     Notes
     -----

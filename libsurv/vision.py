@@ -3,6 +3,18 @@ from pandas import DataFrame
 import matplotlib.pyplot as plt
 
 def plot_train_curve(L, labels=["Learning Curve"], title='Training Curve'):
+    """
+    Plot model training curve
+
+    Parameters
+    ----------
+    L: list
+        Records list during training.
+    labels: list
+        Labels of different datasets.
+    title: str
+        Title of figure.
+    """
     if type(L[0]) != list:
         x = range(1, len(L) + 1)
         plt.plot(x, L, label=labels[0])
@@ -24,18 +36,18 @@ def plot_surv_curve(df_survf, title="Survival Curve"):
 
     Parameters
     ----------
-    df_survf: DataFrame or numpy.array
+    df_survf: DataFrame or numpy.ndarray
         Survival function of samples, shape of which is (n, #Time_Points).
         `Time_Points` indicates the time point presented in columns of DataFrame.
     title: str
-        Title of plot.
+        Title of figure.
     """
     if isinstance(df_survf, DataFrame):
         plt.plot(df_survf.columns.values, np.transpose(df_survf.values))
     elif isinstance(df_survf, np.ndarray):
         plt.plot(np.array([i for i in range(df_survf.shape[1])]), np.transpose(df_survf))
     else:
-        raise TypeError("Type is not supported.")
+        raise TypeError("Type of arguement is not supported.")
 
     plt.title(title)
     plt.show()

@@ -57,6 +57,9 @@ class model(object):
         self.Y = tf.placeholder(tf.float32, [None, 1], name='Y-Input')
 
     def _create_fc_layer(self, x, output_dim, scope):
+        """
+        create a standard fully connected layer
+        """
         with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
             w = tf.get_variable('weights', [x.shape[1], output_dim], 
                 initializer=tf.truncated_normal_initializer(stddev=0.1)
@@ -178,7 +181,7 @@ class model(object):
 
         Parameters
         ----------
-        data_X, data_y: DataFrame
+        data_X, data_y: pandas.DataFrame
             Covariates and labels of survival data. It's suggested that you utilize 
             `libsurv.datasets.survival_df` to obtain the DataFrame object.
         num_steps: int
@@ -256,7 +259,7 @@ class model(object):
 
         Parameters
         ----------
-        X : DataFrame
+        X : pandas.DataFrame
             Input data with covariate variables, shape of which is (n, input_nodes).
         output_margin: boolean
             If output_margin is set to True, then output of model is log hazard ratio.
@@ -264,7 +267,7 @@ class model(object):
 
         Returns
         -------
-        np.array
+        np.ndarray
             Predicted log hazard ratio (or hazard ratio) of samples with shape of (n, 1). 
 
         Examples
@@ -285,7 +288,7 @@ class model(object):
 
         Parameters
         ----------
-        data_X, data_y: DataFrame
+        data_X, data_y: pandas.DataFrame
             Covariates and labels of survival data. It's suggested that you utilize 
             `libsurv.datasets.survival_df` to obtain the DataFrame object.
 
@@ -304,14 +307,14 @@ class model(object):
 
         Parameters
         ----------
-        X: DataFrame
+        X: pandas.DataFrame
             Input data with covariate variables, shape of which is (n, input_nodes).
         plot: boolean
             Plot the estimated survival curve of samples.
 
         Returns
         -------
-        DataFrame
+        pandas.DataFrame
             Predicted survival function of samples, shape of which is (n, #Time_Points).
             `Time_Points` indicates the time point that exists in the training data.
         """

@@ -2,15 +2,19 @@ import numpy as np
 import pandas as pd
 from lifelines.utils import concordance_index as ci
 
+def _check_ndarray(arr):
+    if not isinstance(arr, np.ndarray):
+        raise TypeError("Type of arguement only supports for numpy.ndarray.")
+
 def concordance_index(y_true, y_pred):
     """
     Compute the concordance-index value.
 
     Parameters
     ----------
-    y_true : np.array
+    y_true : np.ndarray
         Observed time. Negtive values are considered right censored.
-    y_pred : np.array
+    y_pred : np.ndarray
         Predicted value.
 
     Returns
@@ -18,6 +22,8 @@ def concordance_index(y_true, y_pred):
     float
         Concordance index.
     """
+    _check_ndarray(y_pred)
+    _check_ndarray(y_true)
     y_true = np.squeeze(y_true)
     y_pred = np.squeeze(y_pred)
     t = np.abs(y_true)
@@ -50,17 +56,19 @@ def baseline_survival_function(y, pred_hr):
 
     Parameters
     ----------
-    y : np.array
+    y : np.ndarray
         Observed time. Negtive values are considered right censored.
-    pred_hr : np.array
+    pred_hr : np.ndarray
         Predicted value, i.e. hazard ratio.
 
     Returns
     -------
     DataFrame
         Estimated baseline survival function. Index of it is time point. 
-        The only one column of it is corresponding survival probability.
+        The only one column of it means the corresponding survival probability.
     """
+    _check_ndarray(y)
+    _check_ndarray(pred_hr)
     y = np.squeeze(y)
     pred_hr = np.squeeze(pred_hr)
     # unpack label

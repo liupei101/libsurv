@@ -26,14 +26,15 @@ def _load_dataset(filename, **kwargs):
 
     Parameters
     ----------
-    filename : string
-        for example "whas_train.csv"
+    filename : str
+        File path of dataset, for example "whas_train.csv".
     usecols : list
-        list of columns in file to use
+        list of columns in file to use.
 
     Returns
     -------
-        output: DataFrame
+    DataFrame
+        dataset.
     """
     return pd.read_csv(resource_filename("libsurv", "datasets/src/" + filename), engine="python", **kwargs)
 
@@ -155,7 +156,7 @@ def load_simulated_data(hr_ratio,
 
     Returns
     -------
-    pandas.DataFrame
+    DataFrame
         A simulated survival dataset following the given args.
 
     Notes

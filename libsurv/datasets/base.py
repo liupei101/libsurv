@@ -15,7 +15,7 @@ def survival_stats(data, t_col="t", e_col="e", plot=False):
     e_col: str
         Column name in data indicating events or status.
     plot: boolean
-        Is plot surival curve.
+        Plot surival curve.
     """
     print("--------------- Survival Data Statistics ---------------")
     N = len(data)
@@ -50,7 +50,7 @@ def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dm
 
     Returns
     -------
-    DMatrix or DataFrame:
+    xgboost.DMatrix or pandas.DataFrame:
         Transformed survival data.
     """
     x_cols = [c for c in data.columns if c not in [t_col, e_col] + exclude_col]
@@ -70,5 +70,9 @@ def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dm
 def survival_dmat(data, **kwargs):
     """
     Survival data transformation for `DMatrix`. See more in `survival_df` function.
+
+    Notes
+    -----
+    See more in function `survival_df`.
     """
     return survival_df(data, to_dmat=True, **kwargs)

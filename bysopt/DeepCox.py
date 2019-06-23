@@ -10,8 +10,8 @@ import pandas as pd
 import numpy as np
 import hyperopt as hpt
 
-from tfdeepsurv import dsnn
-from tfdeepsurv.utils import load_data, survival_df
+from libsurv import DeepCox
+from libsurv.datasets import load_data, survival_df
 
 global Logval, eval_cnt, time_start
 global train_X, train_y, validation_X, validation_y

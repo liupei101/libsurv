@@ -158,7 +158,7 @@ class model(object):
         elif self.config["optimizer"] == 'adam':
             self.optimizer = tf.train.AdamOptimizer(self.config["learning_rate"]).minimize(self.loss, global_step=self.global_step)
         elif self.config["optimizer"] == 'rms':
-            self.optimizer = tf.train.RMSPropOptimizer(self.config["learning_rate"]).minimize(self.loss, global_step=self.global_step)     
+            self.optimizer = tf.train.RMSPropOptimizer(self.config["learning_rate"]).minimize(self.loss, global_step=self.global_step)
         else:
             raise NotImplementedError('Optimizer not recognized')
 
@@ -229,7 +229,7 @@ class model(object):
             y_hat, loss_value, _ = self.sess.run([self.Y_hat, self.loss, self.optimizer], feed_dict=feed_data)
             # append values
             watch_list['loss'].append(loss_value)
-            watch_list['metrics'].append(concordance_index(self.train_data_y.values, y_hat))
+            watch_list['metrics'].append(concordance_index(self.train_data_y.values, -y_hat))
             total_loss += loss_value
             if (index + 1) % num_skip_steps == 0:
                 print('Average loss at step {}: {:.5f}'.format(index + 1, total_loss / num_skip_steps))
@@ -296,9 +296,13 @@ class model(object):
         -------
         float
             CI metrics on your dataset.
+
+        Notes
+        -----
+        We use negtive hazard ratio as the score. See https://stats.stackexchange.com/questions/352183/use-median-survival-time-to-calculate-cph-c-statistic/352435#352435
         """
         _check_surv_data(data_X, data_y)
-        preds = self.predict(data_X)
+        preds = -self.predict(data_X)
         return concordance_index(data_y.values, preds)
 
     def predict_survival_function(self, X, plot=False):

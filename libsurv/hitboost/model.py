@@ -56,7 +56,7 @@ class model(object):
         self.model_params = model_params
         self._model = None
 
-    def train(self, dtrain, num_rounds=100, skip_rounds=10, eval_data=[], silent=False, plot=False):
+    def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], silent=False, plot=False):
         """
         HitBoost model training or watching learning curve on evaluation set.
 
@@ -69,7 +69,7 @@ class model(object):
             The number of iterations.
         skip_rounds: int
             The number of skipped rounds if you want to print infos.
-        eval_data: list
+        evals: list of pairs (xgb.DMatrix, string)
             Evaluation set to watch learning curve. If it is set as an empty list by default, 
             then the training data will became the evaluation set.
         silent: boolean
@@ -88,14 +88,14 @@ class model(object):
         if not isinstance(dtrain, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
 
-        if len(eval_data) == 0:
+        if len(evals) == 0:
             eval_labels = ['train']
             eval_datas = [dtrain]
         else:
-            if not isinstance(eval_data[0], tuple):
+            if not isinstance(evals[0], tuple):
                 raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
-            eval_labels = [c[0] for c in eval_data]
-            eval_datas = [c[1] for c in eval_data]
+            eval_labels = [c[1] for c in evals]
+            eval_datas = [c[0] for c in evals]
         
         # Logging for result
         eval_result = {'td-CI': [], 'Loss': []}
@@ -110,14 +110,14 @@ class model(object):
             # `True`).
             g, h = _hit_grads(pred, dtrain)
             self._model.boost(dtrain, g, h)
+
             # Append to eval_result
-            if len(eval_datas) > 0:
-                # returns a list of values
-                res_loss, res_ci = _hit_eval(self._model, eval_datas)
-                eval_result['Loss'].append(res_loss)
-                eval_result['td-CI'].append(res_ci)
-                if not silent and (_ + 1) % skip_rounds == 0:
-                    _print_eval(_ + 1, res_loss, res_ci, eval_labels)
+            # returns a list of values
+            res_loss, res_ci = _hit_eval(self._model, eval_datas)
+            eval_result['Loss'].append(res_loss)
+            eval_result['td-CI'].append(res_ci)
+            if not silent and (_ + 1) % skip_rounds == 0:
+                _print_eval(_ + 1, res_loss, res_ci, eval_labels)
 
         # plot learning curve
         if plot:
@@ -193,7 +193,7 @@ class model(object):
 
     def save_model(self, file_path):
         """
-        Model saving.
+        xgboost.Booster model saving.
 
         Parameters
         ----------

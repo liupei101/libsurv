@@ -2,6 +2,7 @@
 """
 import numpy as np
 import collections
+from functools import cmp_to_key
 from lifelines.utils import concordance_index
 
 def _abs_sort(x, y):
@@ -10,41 +11,16 @@ def _abs_sort(x, y):
     """
     x, y = x[1], y[1]
     if abs(x) == abs(y):
-        return cmp(y, x)
-    return cmp(abs(x), abs(y))
+        return y - x
+    return abs(x) - abs(y)
 
 def _label_abs_sort(label):
     """
     Built-in function for sorting labels according to its absolute value.
     """
     L = [(i, x) for i, x in enumerate(label)]
-    L = sorted(L, cmp=_abs_sort)
+    L = sorted(L, key=cmp_to_key(_abs_sort))
     return [x[0] for x in L]
-
-def efn_ci(preds, dtrain):
-    """
-    Computation of CI.
-
-    Parameters
-    ----------
-    preds: numpy.array
-        An array with shape of (N, ), where N = #data.
-
-    dtrain: xgboost.DMatrix
-        Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
-        `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
-
-    Returns
-    -------
-    tuple:
-        Name and value of CI.
-    """
-    # Get E, T
-    labels = dtrain.get_label()
-    E = np.array([1 if x > 0 else 0 for x in labels], dtype='int')
-    T = np.abs(labels)
-    ci = concordance_index(T, preds, E)
-    return 'ci', ci
 
 def efn_loss(preds, dtrain):
     """

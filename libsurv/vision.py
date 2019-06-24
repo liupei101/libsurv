@@ -36,7 +36,7 @@ def plot_surv_curve(df_survf, title="Survival Curve"):
 
     Parameters
     ----------
-    df_survf: DataFrame or numpy.ndarray
+    df_survf: pandas.DataFrame or numpy.ndarray
         Survival function of samples, shape of which is (n, #Time_Points).
         `Time_Points` indicates the time point presented in columns of DataFrame.
     title: str

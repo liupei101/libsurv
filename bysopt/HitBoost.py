@@ -1,4 +1,9 @@
 # coding=utf-8
+"""
+templates of tuning hyperparams for HitBoost, read code and change anywhere if necessary.
+
+The parts between two long strings "###..###" is more likely to be changed.
+"""
 # Set no warning
 def warn(*args, **kwargs):
     pass
@@ -43,7 +48,7 @@ def estimate_time():
     th = int(total / 3600)
     tm = int((total - th * 3600) / 60)
     ts = int(total - th * 3600 - tm * 60)
-    print 'Estimate the remaining time: %dh %dm %ds' % (th, tm, ts)
+    print('Estimate the remaining time: %dh %dm %ds' % (th, tm, ts))
 
 def invoke_xgb(data_train, data_test, params):
     #print params
@@ -74,7 +79,7 @@ def invoke_xgb(data_train, data_test, params):
         silent=True,
         plot=False
     )
-    # Prediction
+    # Evaluation
     return model.evals(dtest)
 
 def train_model(args):
@@ -117,9 +122,9 @@ def search_params(max_evals=100):
     ########################################################################
     # Minimize
     best = hpt.fmin(train_model, space, algo=hpt.tpe.suggest, max_evals=max_evals)
-    print "Hyperopt Running Finished !"
-    print "\tBest params :", args_trans(best)
-    print "\tBest metrics:", train_model(best)
+    print("hyper-parameters Searching Finished !")
+    print("\tBest params :", args_trans(best))
+    print("\tBest metrics:", train_model(best))
 
 def write_file(filename, var):
     with open(filename, 'w') as f:

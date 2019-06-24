@@ -1,4 +1,9 @@
 # coding=utf-8
+"""
+templates of tuning hyperparams for EfnBoost, read code and change anywhere if necessary.
+
+The parts between two long strings "###..###" is more likely to be changed.
+"""
 # Set no warning
 def warn(*args, **kwargs):
     pass
@@ -23,6 +28,7 @@ global T_col, E_col
 
 def args_trans(args):
     params = {}
+    ##########################################################
     params["eta"] =  args["eta"] * 0.01 + 0.01
     params["nrounds"] =  args["nrounds"] * 10 + 80
     params['max_depth'] = 2 + args["max_depth"]
@@ -31,6 +37,7 @@ def args_trans(args):
     params['colsample_bytree'] = args['colsample_bytree'] * 0.1 + 0.4
     params['reg_lambda'] = args['reg_lambda']
     params['reg_gamma'] = args['reg_gamma']
+    ##########################################################
     return params
 
 def estimate_time():
@@ -40,7 +47,7 @@ def estimate_time():
     th = int(total / 3600)
     tm = int((total - th * 3600) / 60)
     ts = int(total - th * 3600 - tm * 60)
-    print 'Estimate the remaining time: %dh %dm %ds' % (th, tm, ts)
+    print('Estimate the remaining time: %dh %dm %ds' % (th, tm, ts))
 
 def invoke_xgb(data_train, data_test, params):
     dtrain = survival_dmat(data_train, t_col=T_col, e_col=E_col, label_col="Y")
@@ -107,9 +114,9 @@ def search_params(max_evals=100):
     ####################################################################
     # Minimize
     best = hpt.fmin(train_model, space, algo=hpt.tpe.suggest, max_evals=max_evals)
-    print "Hyperopt Running Finished !"
-    print "\tBest params :", args_trans(best)
-    print "\tBest metrics:", train_model(best)
+    print("hyper-parameters Searching Finished !")
+    print("\tBest params :", args_trans(best))
+    print("\tBest metrics:", train_model(best))
 
 def write_file(filename, var):
     with open(filename, 'w') as f:
@@ -123,7 +130,6 @@ if __name__ == "__main__":
     #### Set file name of input and output ###
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-    ##########################################
     train_data = pd.read_csv(input_file)
     print "No. Rows:", len(train_data)
     print "ID. Cols:", train_data.columns

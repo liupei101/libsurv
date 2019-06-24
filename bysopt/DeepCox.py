@@ -1,6 +1,8 @@
 # coding=utf-8
-"""templates for tuning hyperparams using Bayesian optimization,
-read code and change anywhere if necessary.
+"""
+templates of tuning hyperparams for DeepCox, read code and change anywhere if necessary.
+
+The parts between two long strings "###..###" is more likely to be changed.
 """
 import sys
 import os
@@ -149,8 +151,8 @@ def main(filename):
     eval_cnt = 0
     time_start = time.clock()
 
-    print("No. of Samples for Searching Params: ", len(train_X))
-    print("Hidden Layers of Network: ", HIDDEN_LAYERS)
+    print("# No. Samples for Searching: ", len(train_X))
+    print("# Hidden Layers: ", HIDDEN_LAYERS)
     
     # start searching params
     search_params(max_evals = MAX_EVALS)

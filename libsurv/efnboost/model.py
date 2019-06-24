@@ -25,7 +25,7 @@ class model(object):
         self.model_params = model_params
         self._model = None
 
-    def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], plot=False):
+    def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], silent=False, plot=False):
         """
         EfnBoost model training and watching learning curve on evaluation set.
 
@@ -48,6 +48,8 @@ class model(object):
         evals: list of pairs (xgb.DMatrix, string)
             Evaluation set to watch learning curve. If it is set as an empty list by default, 
             then the training data will became the evaluation set.
+        silent: boolean
+            Print infos to screen.
         plot: boolean
             Plot the learning curve.
 
@@ -61,12 +63,16 @@ class model(object):
             {'train': {'efn_loss': ['0.48253', '0.35953']},
              'eval': {'efn_loss': ['0.480385', '0.357756']}}
         """
+        # Check arguements of function
         if not isinstance(dtrain, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
 
         if len(evals) == 0:
             evals = [(dtrain, 'train')]
         
+        if silent:
+            skip_rounds = False
+
         # Train model
         evals_result = {}
         self._model = xgb.train(

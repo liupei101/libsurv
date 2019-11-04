@@ -2,9 +2,9 @@
 
 ## Introduction
 
-A library of efficient survival analysis models, including DeepCox, HitBoost and EfnBoost methods.
+A library of efficient survival analysis models, including `DeepCox`, `HitBoost` and `EfnBoost` methods.
 
-- `DeepCox`: Deep cox proportional hazard model implemented by tensorflow.
+- `DeepCox`: Deep cox proportional hazard model implemented by tensorflow. It's exactly the same as [`TFDeepSurv`](https://github.com/liupei101/TFDeepSurv).
 - `HitBoost`: Survival analysis via a multi-output gradient boosting decision tree method.
 - `EfnBoost`: Optimized cox proportional hazard model via an objective function of Efron approximation.
 

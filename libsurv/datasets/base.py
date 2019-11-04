@@ -26,7 +26,7 @@ def survival_stats(data, t_col="t", e_col="e", plot=False):
     print("# Max Time:", data[t_col].max())
     print("")
     if plot:
-        plot_km_survf(data, t_col="t", e_col="e")
+        plot_km_survf(data, t_col=t_col, e_col=e_col)
 
 def survival_df(data, t_col="t", e_col="e", label_col="Y", exclude_col=[], to_dmat=False):
     """

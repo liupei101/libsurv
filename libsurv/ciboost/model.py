@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from libsurv.vision import plot_train_curve, plot_surv_curve
-from libsurv.utils import concordance_index, baseline_survival_function
+from ..vision import plot_train_curve, plot_surv_curve
+from ..utils import concordance_index, baseline_survival_function
 
 from ._core import _params_init
 from ._core import _ce_grads, ce_loss

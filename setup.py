@@ -34,7 +34,7 @@ setup(name=pkg_name,
     python_requires=">=3.5",
     install_requires=[
         'setuptools>=36',
-        'tensorflow==1.10.0',
+        'tensorflow==1.12.1',
         'pandas>=0.24.2',
         'numpy==1.14.5',
         'matplotlib>=3.0.3',

@@ -76,7 +76,7 @@ def _efn_loss(preds, dtrain):
     sum_haz_ratio = cum_haz_ratio[-1]
 
     # SR(t)
-    sr_t = sum_haz_ratio - np.append(0, cum_hazard_ratio[seg_idx[:-1]])
+    sr_t = sum_haz_ratio - np.append(0, cum_haz_ratio[seg_idx[:-1]])
 
     # segment event count
     cum_e = np.cumsum(E)
@@ -103,6 +103,7 @@ def _efn_loss(preds, dtrain):
 def _efn_grads(preds, dtrain):
     """
     Gradient computation of custom objective function - Efron approximation.
+    
     Parameters
     ----------
     preds: numpy.array
@@ -111,6 +112,7 @@ def _efn_grads(preds, dtrain):
         Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
         `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), 
         where N = #data.
+    
     Returns
     -------
     tuple:
@@ -138,7 +140,7 @@ def _efn_grads(preds, dtrain):
     sum_haz_ratio = cum_haz_ratio[-1]
 
     # SR(t)
-    sr_t = sum_haz_ratio - np.append(0, cum_hazard_ratio[seg_idx[:-1]])
+    sr_t = sum_haz_ratio - np.append(0, cum_haz_ratio[seg_idx[:-1]])
 
     # segment event count
     cum_e = np.cumsum(E)
@@ -179,4 +181,4 @@ def _efn_grads(preds, dtrain):
             hess[sorted_index[idx]] = h
             idx += 1
 
-    return grad / cnt_e, hess / cnt_e
+    return grad, hess

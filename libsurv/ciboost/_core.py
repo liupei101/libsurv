@@ -5,8 +5,8 @@ L = alpha * L1 + (1 - alpha) * L2
 """
 import numpy as np
 
-from ._ci_core import *
-from ._efn_core import *
+from ._ci_core import _ci_loss, _ci_grads
+from ._efn_core import _efn_loss, _efn_grads
 
 global _ALPHA
 
@@ -20,10 +20,10 @@ def _params_init(params):
         `alpha` indicates the coefficient in the objective function.
     
     """
-	global _ALPHA
+    global _ALPHA
 
-	assert params <= 1.0 and params >= .0
-	_ALPHA = params
+    assert params <= 1.0 and params >= .0
+    _ALPHA = params
 
 def ce_loss(preds, dtrain):
     """
@@ -57,7 +57,7 @@ def _ce_grads(preds, dtrain):
     Parameters
     ----------
     preds: numpy.array
-        An array with shape of (N, K), where N = #data. This is also known as log hazard ratio.
+        An array with shape of (N, ), where N = #data. This is also known as log hazard ratio.
     dtrain: xgboost.DMatrix
         Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
         `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
@@ -67,4 +67,6 @@ def _ce_grads(preds, dtrain):
     tuple:
         The first- and second-order gradients of objective function w.r.t. `preds`.
     """
-    return _ALPHA * _efn_grads(preds, dtrain) + (1.0 - _ALPHA) * _ci_grads(preds, dtrain)
+    L1_grads, L1_hess = _efn_grads(preds, dtrain)
+    L2_grads, L2_hess = _ci_grads(preds, dtrain)
+    return _ALPHA * L1_grads + (1.0 - _ALPHA) * L2_grads, _ALPHA * L1_hess + (1.0 - _ALPHA) * L2_hess

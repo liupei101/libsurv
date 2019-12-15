@@ -10,7 +10,7 @@ import numpy as np
 _GAMMA = 0.01
 
 def _ci_loss(preds, dtrain):
-	"""
+    """
     Computation of objective function.
     a.k.a. CI approximated by convex function.
     
@@ -52,7 +52,7 @@ def _ci_loss(preds, dtrain):
     return "ci_loss", loss
 
 def _ci_grads(preds, dtrain):
-	"""
+    """
     Gradient computation of custom objective function.
     
     Parameters
@@ -95,7 +95,7 @@ def _ci_grads(preds, dtrain):
 
     # firstly, compute gradients of numerator(\alpha) and denominator(\beta) in L2
     for k in range(n):
-    	## gradients of denominator (\beta)
+        ## gradients of denominator (\beta)
         # For set s1 (i.e. \omega 1 in the paper)
         s1 = np.sum(T > T[k]) * E[k]
         # For set s2 (i.e. \omega 2 in the paper)
@@ -109,7 +109,7 @@ def _ci_grads(preds, dtrain):
         # i.e. the first-order and second-order gradients related to set s1
         g_s1, h_s1 = .0, .0
         if E[k] == 1:
-        	w = y_hat[k] - y_hat[T[i] < T]
+            w = y_hat[k] - y_hat[T[k] < T]
             # For den and num
             den += -np.sum(w)
             num += -np.sum((w < _GAMMA) * w * (_GAMMA - w)**2)

@@ -15,7 +15,7 @@ def plot_train_curve(L, labels=["Learning Curve"], title='Training Curve'):
     title: str
         Title of figure.
     """
-    if type(L[0]) != list:
+    if type(L[0]) != tuple:
         x = range(1, len(L) + 1)
         plt.plot(x, L, label=labels[0])
     else:

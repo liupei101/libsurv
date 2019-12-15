@@ -28,11 +28,11 @@ def _ci_loss(preds, dtrain):
     tuple:
         Name and value of objective function.
     """
-    # np.array with shape of (N, )
+    # predictions: np.array with shape of (N, )
     n = preds.shape[0]
     y_hat = preds
 
-    # np.array with shape of (N, )
+    # labels: np.array with shape of (N, )
     labels = dtrain.get_label().astype('int')
     E = (labels > 0).astype('int')
     T = np.abs(labels)
@@ -75,11 +75,11 @@ def _ci_grads(preds, dtrain):
     For efficiency, the implementation utilizes built-in function 
     in `numpy` as much as possible (maybe at the cost of readability).
     """
-    # np.array with shape of (n, )
+    # predictions: np.array with shape of (n, )
     n = preds.shape[0]
     y_hat = preds
 
-    # np.array with shape of (n, )
+    # labels: np.array with shape of (n, )
     labels = dtrain.get_label().astype('int')
     E = (labels > 0).astype('int')
     T = np.abs(labels)
@@ -133,4 +133,4 @@ def _ci_grads(preds, dtrain):
         grad_f = (den * grad_num - num * grad_den) / (den**2)
         hess_f = (den * hess_num - num * hess_den) / (den**2) - 2 * grad_den / den * grad_f
     
-    return grad_f.flatten(), hess_f.flatten()
+    return grad_f, hess_f

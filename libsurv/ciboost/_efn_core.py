@@ -54,12 +54,12 @@ def _efn_loss(preds, dtrain):
     tuple:
         Name and value of objective function.
     """
+    # prediction
     n = preds.shape[0]
     
-    # sorted array
+    # lables
     labels = dtrain.get_label()
     sorted_index = _label_abs_sort(labels)
-    # sort E, T, y_hat
     E = (labels[sorted_index] > 0).astype(int)
     T = np.abs(labels[sorted_index])
     y_hat = preds[sorted_index]
@@ -97,7 +97,7 @@ def _efn_loss(preds, dtrain):
     loss = loss - np.sum(E * y_hat)
 
     ### normalize by the number of events
-    return "efr_loss", loss / cnt_e
+    return "efn_loss", loss / cnt_e
 
 
 def _efn_grads(preds, dtrain):
@@ -118,13 +118,13 @@ def _efn_grads(preds, dtrain):
     tuple:
         The first- and second-order gradients of objective function w.r.t. `preds`.
     """
+    # predictions
     n = preds.shape[0]
     
-    # sorted array
+    # labels: get sorted E and T
     labels = dtrain.get_label()
     sorted_index = _label_abs_sort(labels)
-    # sort E, T, y_hat
-    E = (labels[sorted_index] < 0).astype('int')
+    E = (labels[sorted_index] > 0).astype('int')
     T = np.abs(labels[sorted_index])
     y_hat = preds[sorted_index]
 
@@ -152,10 +152,10 @@ def _efn_grads(preds, dtrain):
     seg_hdr = np.diff(np.append(0, cum_dhr[seg_idx]))
 
     # Compute four pre-defined functions
-    alpha = np.zeros_like(seg_idx)
-    beta = np.zeros_like(seg_idx)
-    phi = np.zeros_like(seg_idx)
-    omega = np.zeros_like(seg_idx)
+    alpha = np.zeros_like(seg_idx, dtype=float)
+    beta = np.zeros_like(seg_idx, dtype=float)
+    phi = np.zeros_like(seg_idx, dtype=float)
+    omega = np.zeros_like(seg_idx, dtype=float)
     for i in np.arange(cnt_seg):
         if seg_e[i] > 0:
             w = np.arange(seg_e[i]).astype(np.float32) / seg_e[i]
@@ -166,8 +166,8 @@ def _efn_grads(preds, dtrain):
             omega[i] = np.sum((1.0 - (1.0 - w) ** 2) / (contb ** 2))
 
     # Compute grads and hessian of each individual
-    grad = np.zeros_like(preds)
-    hess = np.zeros_like(preds)
+    grad = np.zeros_like(y_hat)
+    hess = np.zeros_like(y_hat)
     idx, cur_alpha, cur_beta = 0, .0, .0
 
     for seg in np.arange(cnt_seg):
@@ -177,7 +177,8 @@ def _efn_grads(preds, dtrain):
         while idx <= seg_idx[seg]:
             g = haz_ratio[idx] * (cur_alpha - E[idx] * phi[seg])
             h = g - (haz_ratio[idx] ** 2) * (cur_beta - E[idx] * omega[seg]) + E[idx]
-            grad[sorted_index[idx]] = g 
+            # filled in original order
+            grad[sorted_index[idx]] = g
             hess[sorted_index[idx]] = h
             idx += 1
 

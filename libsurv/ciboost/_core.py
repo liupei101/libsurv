@@ -23,6 +23,11 @@ def _params_init(params):
     global _ALPHA
 
     assert params <= 1.0 and params >= .0
+    # NOTE: If params equals 0, the first boosting round in L2 would get errors.
+    #       The initial zero prediction in XGBoost results in this issue.
+    if params == .0:
+        params = 1e-2
+    
     _ALPHA = params
 
 def ce_loss(preds, dtrain):

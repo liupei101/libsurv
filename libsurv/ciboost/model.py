@@ -23,7 +23,6 @@ class model(object):
             See more in `Reference <https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.training>`.
         """
         super(model, self).__init__()
-
         _params_init(loss_alpha)
         self.model_params = model_params
         self._model = None

@@ -41,11 +41,11 @@ def _ci_loss(preds, dtrain):
     loss_num = .0
     loss_den = .0
     for i in np.arange(n):
-        if E[i] == 1:
+        if E[i] > 0:
             w = y_hat[i] - y_hat[T[i] < T]
             # For part of denominator and numerator
-            loss_den += -np.sum(w)
-            loss_num += -np.sum((w < _GAMMA) * w * (_GAMMA - w)**2)
+            loss_den += np.sum(-w)
+            loss_num += np.sum((w < _GAMMA) * (-w) * (_GAMMA - w)**2)
     
     loss = 0 if loss_den == 0 else loss_num / loss_den
 
@@ -83,7 +83,7 @@ def _ci_grads(preds, dtrain):
     labels = dtrain.get_label().astype('int')
     E = (labels > 0).astype('int')
     T = np.abs(labels)
-
+    
     # L2 Gradient Computation (Concordance Index Approximation)
     # gradients computation of numerator and denominator in L2
     # initialization
@@ -94,32 +94,37 @@ def _ci_grads(preds, dtrain):
     hess_num = np.zeros_like(y_hat)
 
     # firstly, compute gradients of numerator(\alpha) and denominator(\beta) in L2
-    for k in range(n):
+    for k in np.arange(n):
         ## gradients of denominator (\beta)
         # For set s1 (i.e. \omega 1 in the paper)
-        s1 = np.sum(T > T[k]) * E[k]
+        # s1 = (k, i): E_k = 1 and T_k < T_i
+        s1 = E[k] * np.sum(T > T[k])
         # For set s2 (i.e. \omega 2 in the paper)
-        s2 = np.sum((T < T[k]) * (E > 0))
+        # s2 = (i, k): E_i = 1 and T_i < T_k
+        s2 = np.sum((E > 0) * (T < T[k]))
         # For grad_den (i.e. the first-order gradient of denominator)
         grad_den[k] = s2 - s1
+        # hess_den[k] = 0
 
         ## gradients of numerator (\alpha)
 
         # set S1
         # i.e. the first-order and second-order gradients related to set s1
+        # s1 = (k, i): E_k = 1 and T_k < T_i
         g_s1, h_s1 = .0, .0
         if E[k] == 1:
             w = y_hat[k] - y_hat[T[k] < T]
             # For den and num
-            den += -np.sum(w)
-            num += -np.sum((w < _GAMMA) * w * (_GAMMA - w)**2)
+            den += np.sum(-w)
+            num += np.sum((w < _GAMMA) * (-w) * (_GAMMA - w)**2)
 
             g_s1 = np.sum((w < _GAMMA) * (_GAMMA - w) * (3*w - _GAMMA))
+
             h_s1 = np.sum((w < _GAMMA) * (4*_GAMMA - 6*w))
         
         # set S2
         # i.e. the first-order and second-order gradients related to set s2
-        w = y_hat[(T < T[k]) * (E > 0)] - y_hat[k]
+        w = y_hat[(E > 0) * (T < T[k])] - y_hat[k]
         g_s2 = np.sum((w < _GAMMA) * (_GAMMA - w) * (_GAMMA - 3*w))
         h_s2 = np.sum((w < _GAMMA) * (4*_GAMMA - 6*w))
         
@@ -130,7 +135,7 @@ def _ci_grads(preds, dtrain):
         grad_f = np.zeros_like(y_hat)
         hess_f = np.zeros_like(y_hat)
     else:
-        grad_f = (den * grad_num - num * grad_den) / (den**2)
-        hess_f = (den * hess_num - num * hess_den) / (den**2) - 2 * grad_den / den * grad_f
+        grad_f = grad_num / den - num * grad_den / (den ** 2)
+        hess_f = (den * hess_num - num * hess_den) / (den ** 2) - 2 * grad_den / den * grad_f
     
     return grad_f, hess_f

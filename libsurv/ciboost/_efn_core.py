@@ -144,7 +144,6 @@ def _efn_grads(preds, dtrain):
 
     # segment event count
     cum_e = np.cumsum(E)
-    cnt_e = cum_e[-1]
     seg_e = np.diff(np.append(0, cum_e[seg_idx]))
 
     # segment sum (hazard ratio of E=1)
@@ -161,22 +160,22 @@ def _efn_grads(preds, dtrain):
             w = np.arange(seg_e[i]).astype(np.float32) / seg_e[i]
             contb = (sr_t[i] - w * seg_hdr[i])
             alpha[i] = np.sum(1.0 / contb)
-            phi[i] = np.sum(w / contb)
-            beta[i] = np.sum(1.0 / (contb ** 2))
+            beta[i] = np.sum(w / contb)
+            phi[i] = np.sum(1.0 / (contb ** 2))
             omega[i] = np.sum((1.0 - (1.0 - w) ** 2) / (contb ** 2))
 
     # Compute grads and hessian of each individual
     grad = np.zeros_like(y_hat)
     hess = np.zeros_like(y_hat)
-    idx, cur_alpha, cur_beta = 0, .0, .0
+    idx, sum_alpha, sum_phi = 0, .0, .0
 
     for seg in np.arange(cnt_seg):
-        cur_alpha += alpha[seg]
-        cur_beta += beta[seg]
+        sum_alpha += alpha[seg]
+        sum_phi += phi[seg]
         # for individuals in segment [idx, seg_idx[seg]]
         while idx <= seg_idx[seg]:
-            g = haz_ratio[idx] * (cur_alpha - E[idx] * phi[seg])
-            h = g - (haz_ratio[idx] ** 2) * (cur_beta - E[idx] * omega[seg]) + E[idx]
+            g = haz_ratio[idx] * (sum_alpha - E[idx] * beta[seg]) - E[idx]
+            h = g - (haz_ratio[idx] ** 2) * (sum_phi - E[idx] * omega[seg]) + E[idx]
             # filled in original order
             grad[sorted_index[idx]] = g
             hess[sorted_index[idx]] = h

@@ -48,7 +48,9 @@ def ce_loss(preds, dtrain):
     Absolute value of label represents `T` in survival data, Negtive values are considered 
     right censored, i.e. `E = 0`; Positive values are considered event occurrence, i.e. `E = 1`.
     """
-    return "ce_loss", _ALPHA * _efn_loss(preds, dtrain)[1] + (1.0 - _ALPHA) * _ci_loss(preds, dtrain)[1]
+    __, L1_loss = _efn_loss(preds, dtrain)
+    __, L2_loss = _ci_loss(preds, dtrain)
+    return "ce_loss", _ALPHA * L1_loss + (1.0 - _ALPHA) * L2_loss
 
 def _ce_grads(preds, dtrain):
     """

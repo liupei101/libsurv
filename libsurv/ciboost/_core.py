@@ -5,8 +5,8 @@ L = alpha * L1 + (1 - alpha) * L2
 """
 import numpy as np
 
-from ._ci_core import _ci_loss, _ci_grads
-from ._efn_core import _efn_loss, _efn_grads
+from ._ci_core import ci_loss, _ci_grads
+from ._efn_core import efn_loss, _efn_grads
 
 global _ALPHA
 
@@ -53,8 +53,8 @@ def ce_loss(preds, dtrain):
     Absolute value of label represents `T` in survival data, Negtive values are considered 
     right censored, i.e. `E = 0`; Positive values are considered event occurrence, i.e. `E = 1`.
     """
-    __, L1_loss = _efn_loss(preds, dtrain)
-    __, L2_loss = _ci_loss(preds, dtrain)
+    __, L1_loss = efn_loss(preds, dtrain)
+    __, L2_loss = ci_loss(preds, dtrain)
     return "ce_loss", _ALPHA * L1_loss + (1.0 - _ALPHA) * L2_loss
 
 def _ce_grads(preds, dtrain):

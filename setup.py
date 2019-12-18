@@ -13,8 +13,8 @@ with open("README.md") as f:
 
 setup(name=pkg_name,
     version=__version__,
-    description='A library of efficient survival analysis models, including DeepCox, HitBoost and EfnBoost methods.',
-    keywords = "survival analysis, deep learning, cox regression, XGBoost",
+    description='A library of efficient survival analysis models, including DeepCox, HitBoost, CEBoost and EfnBoost methods.',
+    keywords = "survival analysis, deep learning, cox regression, risk prediction, XGBoost",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/liupei101/libsurv',

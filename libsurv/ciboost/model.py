@@ -11,10 +11,10 @@ from ._core import _ce_grads, ce_loss
 
 
 class model(object):
-    """ECBoost model class"""
+    """CEBoost model class"""
     def __init__(self, model_params, loss_alpha=.0):
         """
-        ECBoost Class Constructor.
+        CEBoost Class Constructor.
 
         Parameters
         ----------
@@ -23,6 +23,7 @@ class model(object):
             See more in `Reference <https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.training>`.
         """
         super(model, self).__init__()
+
         _params_init(loss_alpha)
         self.model_params = model_params
         self._model = None
@@ -108,6 +109,7 @@ class model(object):
     def predict(self, ddata, output_margin=True):
         """
         Prediction method.
+        
         Parameters
         ----------
         ddata: xgboost.DMatrix
@@ -116,6 +118,7 @@ class model(object):
         output_margin: boolean
             If output_margin is set to True, then output of model is log hazard ratio.
             Otherwise the output is hazard ratio, i.e. exp(beta*x).
+        
         Returns
         -------
         numpy.array
@@ -132,12 +135,14 @@ class model(object):
     def predict_survival_function(self, X, plot=False):
         """
         Predict survival function of samples.
+        
         Parameters
         ----------
         X: xgboost.DMatrix
             Input data.
         plot: boolean
             Plot the estimated survival curve of samples.
+        
         Returns
         -------
         pandas.DataFrame
@@ -157,14 +162,17 @@ class model(object):
     def evals(self, dtest):
         """
         Evaluate labeled dataset using the CI metrics under current trained model.
+        
         Parameters
         ----------
         dtest: xgboost.DMatrix
             Test data for survival analysis.
+        
         Returns
         -------
         float
             CI metrics on your dataset.
+        
         Notes
         -----
         We use negtive hazard ratio as the score. See https://stats.stackexchange.com/questions/352183/use-median-survival-time-to-calculate-cph-c-statistic/352435#352435
@@ -175,6 +183,7 @@ class model(object):
     def save_model(self, file_path):
         """
         xgboost.Booster model saving.
+        
         Parameters
         ----------
         file_path: str

@@ -9,7 +9,7 @@ import numpy as np
 
 _GAMMA = 0.01
 
-def _ci_loss(preds, dtrain):
+def ci_loss(preds, dtrain):
     """
     Computation of objective function.
     a.k.a. CI approximated by convex function.
@@ -83,7 +83,7 @@ def _ci_grads(preds, dtrain):
     labels = dtrain.get_label().astype('int')
     E = (labels > 0).astype('int')
     T = np.abs(labels)
-    
+
     # L2 Gradient Computation (Concordance Index Approximation)
     # gradients computation of numerator and denominator in L2
     # initialization

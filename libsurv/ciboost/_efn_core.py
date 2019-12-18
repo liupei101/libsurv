@@ -35,7 +35,7 @@ def _label_abs_sort(label):
     L = sorted(L, key=cmp_to_key(_abs_sort))
     return [item[0] for item in L]
 
-def _efn_loss(preds, dtrain):
+def efn_loss(preds, dtrain):
     """
     Computation of objective function.
     a.k.a Negtive Log of Efron Approximation.

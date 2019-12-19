@@ -1,5 +1,5 @@
 """
-templates of tuning hyperparams for EfnBoost, read code and change anywhere if necessary.
+templates of tuning hyperparams for CEBoost, read code and change anywhere if necessary.
 The parts between two long strings "###..###" is more likely to be changed.
 """
 # Set no warning

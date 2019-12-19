@@ -86,6 +86,7 @@ def train_model(args):
     global Logval, eval_cnt
 
     params = args_trans(args)
+    
     # Repeated KFold cross validation
     rskf = RepeatedKFold(n_splits=k_fold, n_repeats=n_repeats, random_state=64)
     metrics = []
@@ -94,9 +95,11 @@ def train_model(args):
         data_validate = train_data.iloc[test_index,  :]
         metrics.append(invoke_xgb(data_train, data_validate, params))
     metrics_mean = np.array(metrics).mean()
+    
     # Write log
     Logval.append({'params': params, 'ci': metrics_mean})
     eval_cnt += 1
+    
     # Estimate time left
     if eval_cnt % 1 == 0:
         print params, metrics_mean
@@ -119,12 +122,13 @@ def search_params(max_evals=100):
         "loss_alpha": hpt.hp.randint("loss_alpha", 11),# [0.0, 1.0] = 0.1 * [0, 10]
         "loss_gamma": hpt.hp.uniform("loss_gamma", 0.0, 1.0) # [0.0, 1.0]
     }
+    
     ########################################################################
     # Minimize
     best = hpt.fmin(train_model, space, algo=hpt.tpe.suggest, max_evals=max_evals)
     print("hyper-parameters Searching Finished !")
     print("\tBest params :", args_trans(best))
-    print("\tBest metrics:", train_model(best))
+    print("\tBest metrics:", 1.0 - train_model(best))
 
 def write_file(filename, var):
     with open(filename, 'w') as f:
@@ -139,8 +143,8 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
     train_data = pd.read_csv(input_file)
-    print "No. Rows:", len(train_data)
-    print "ID. Cols:", train_data.columns
+    print("No. Rows:", len(train_data))
+    print("ID. Cols:", train_data.columns)
     ##########################################
     ###    Initialize global variables     ###
     Logval = []

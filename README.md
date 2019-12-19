@@ -27,6 +27,8 @@ pip3 install .
 
 Usage of `DeepCox`, `EfnBoost`, `CEBoost` and `HitBoost` are provided in [Jupyter Notebooks](examples/).
 
+Hyper-parameters tuning can refer to [libsurv/bysopt](bysopt/).
+
 ## Citation
 
 If you would like to cite our package, some reference papers are listed below: 

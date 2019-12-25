@@ -130,9 +130,16 @@ def search_params(max_evals=100):
     print("\tBest params :", args_trans(best))
     print("\tBest metrics:", 1.0 - train_model(best))
 
-def write_file(filename, var):
-    with open(filename, 'w') as f:
-        json.dump(var, f)
+def write_file(message, filepath):
+    """Write message into the specified file formatted as JSON"""
+    # unified format for method `json.dump`
+    # convert it back before passing it to models
+    for m in message:
+        for k in ["nrounds", "max_depth"]:
+            m["params"][k] = 1.0 * m["params"][k]
+    
+    with open(filepath, 'w') as f:
+        json.dump(message, f)
 
 # Usage:
 # - python3 input_file_path output_file_path
@@ -158,4 +165,4 @@ if __name__ == "__main__":
     time_start = time.clock()
     ##########################################
     search_params(max_evals=max_iters)
-    write_file(output_file, Logval)
+    write_file(Logval, output_file)

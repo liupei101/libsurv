@@ -145,6 +145,12 @@ def search_params(max_evals=100):
 
 def write_file(message, filepath):
     """Write message into the specified file formatted as JSON"""
+    # unified format for method `json.dump`
+    # convert it back before passing it to models
+    for m in message:
+        for k in ["nrounds", "max_depth"]:
+            m["params"][k] = 1.0 * m["params"][k]
+    
     with open(filepath, 'w') as f:
         json.dump(message, f)
 

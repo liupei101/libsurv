@@ -7,7 +7,7 @@ from ..vision import plot_train_curve, plot_surv_curve
 from ..utils import concordance_index, baseline_survival_function
 
 from ._core import _params_init
-from ._core import _ce_grads, ce_loss
+from ._core import _ce_grads, ce_loss, ce_evals
 
 
 class model(object):
@@ -28,7 +28,7 @@ class model(object):
         self.model_params = model_params
         self._model = None
 
-    def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], silent=False, plot=False):
+    def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], name_evals="ce_evals", silent=False, plot=False):
         """
         ECBoost model training and watching learning curve on evaluation set.
 
@@ -51,6 +51,8 @@ class model(object):
         evals: list of pairs (xgb.DMatrix, string)
             Evaluation set to watch learning curve. If it is set as an empty list by default, 
             then the training data will became the evaluation set.
+        name_evals: string
+            The name of evaluation method. Only 'ce_loss' and 'ce_evals' are available.
         silent: boolean
             Print infos to screen.
         plot: boolean
@@ -75,6 +77,13 @@ class model(object):
         if silent:
             skip_rounds = False
 
+        if name_evals == "ce_loss":
+            func_evals = ce_loss
+        elif name_evals == "ce_evals":
+            func_evals = ce_evals
+        else:
+            raise NotImplementedError("Can not recognize evaluation method.")
+
         # Train model
         evals_result = {}
         self._model = xgb.train(
@@ -84,7 +93,7 @@ class model(object):
             evals=evals,
             evals_result=evals_result,
             obj=_ce_grads,
-            feval=ce_loss,
+            feval=func_evals,
             verbose_eval=skip_rounds
         )
 
@@ -93,10 +102,10 @@ class model(object):
             data_labels = [c[1] for c in evals]
             _evals_list = []
             for c in data_labels:
-                _evals_list.append(evals_result[c]['ce_loss'])
+                _evals_list.append(evals_result[c][name_evals])
             evals_zipped = list(zip(*_evals_list))
             # plot
-            plot_train_curve(evals_zipped, data_labels, "Loss function")
+            plot_train_curve(evals_zipped, data_labels, "Performance")
 
         # update the baseline survival function after training
         self.HR = self.predict(dtrain, output_margin=False)

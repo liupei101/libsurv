@@ -8,6 +8,8 @@ import numpy as np
 from ._ci_core import ci_loss, _ci_grads
 from ._efn_core import efn_loss, _efn_grads
 
+from ..utils import concordance_index
+
 global _ALPHA
 
 def _params_init(params):
@@ -29,6 +31,25 @@ def _params_init(params):
         params = 1e-2
     
     _ALPHA = params
+
+def ce_evals(preds, dtrain):
+    """
+    Evaluation of CEBoost model.
+
+    Parameters
+    ----------
+    preds: numpy.array
+        An array with shape of (N, ), where N = #data. This is also known as log hazard ratio.
+    dtrain: xgboost.DMatrix
+        Training data with type of `xgboost.DMatrix`. Labels can be obtained by: 
+        `labels = dtrain.get_label()`, and it is `numpy.array` with shape of (N, ), where N = #data.
+    
+    Returns
+    -------
+    float:
+        Concordance index.
+    """
+    return "ce_evals", concordance_index(dtrain.get_label(), preds)
 
 def ce_loss(preds, dtrain):
     """

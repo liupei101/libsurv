@@ -8,8 +8,6 @@ import numpy as np
 from ._ci_core import ci_loss, _ci_grads
 from ._efn_core import efn_loss, _efn_grads
 
-from ..utils import concordance_index
-
 global _ALPHA
 
 def _params_init(params):
@@ -49,7 +47,24 @@ def ce_evals(preds, dtrain):
     float:
         Concordance index.
     """
-    return "ce_evals", concordance_index(dtrain.get_label(), preds)
+    N = preds.shape[0]
+    # labels
+    labels = dtrain.get_label().astype('int')
+    E = (labels > 0).astype('int')
+    T = np.abs(labels)
+    
+    # count indicator
+    nsum = 0
+    ny = 0
+    for i in range(N):
+        if E[i] > 0:
+            p = preds[i] - preds[T[i] < T]
+            nsum += p.shape[0]
+            ny += np.sum(p > 0)
+    
+    CI = 1.0 * ny / nsum
+
+    return "ce_evals", CI
 
 def ce_loss(preds, dtrain):
     """

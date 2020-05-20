@@ -35,7 +35,7 @@ setup(name=pkg_name,
     install_requires=[
         'tensorflow>=1.10.0, <2.0.0',
         'pandas>=0.24.2',
-        'numpy==1.14.5',
+        'numpy>=1.14.5',
         'matplotlib>=3.0.3',
         'lifelines>=0.14.6',
         'xgboost>=0.82',

@@ -7,7 +7,7 @@ from ._hit_core import _global_init
 from ._hit_core import _hit_grads
 from ._hit_core import hit_tdci, hit_loss
 
-from ._utils import _check_params
+from ._utils import _check_params, _check_data
 from ._utils import _hit_eval
 from ._utils import _print_eval
 
@@ -48,7 +48,7 @@ class model(object):
 
         Notes
         -----
-        The type of objective must be `multi:softprob` and the 'num_class' is necessary.
+        The type of objective must be `multi:softprob` and the 'num_class' is required.
         """
         super(model, self).__init__()
         # initialize global params
@@ -84,9 +84,8 @@ class model(object):
         """
         # First to check the args
         _check_params(self.model_params)
-
-        if not isinstance(dtrain, xgb.DMatrix):
-            raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
+        # then check the train data
+        _check_data(dtrain, self.model_params['num_class'])
 
         if len(evals) == 0:
             eval_labels = ['train']

@@ -1,8 +1,10 @@
 from ._hit_core import hit_tdci, hit_loss
 
+EPS = 0.00001
+
 def _check_params(model_params):
     """
-    Check `model_params` and raise errors.
+    Check `model_params`.
     """
     if "objective" in model_params:
         if model_params["objective"] != "multi:softprob":
@@ -12,6 +14,31 @@ def _check_params(model_params):
 
     if "num_class" not in model_params:
         raise ValueError("The parameter of 'num_class' must be included.")
+
+def _check_data(data, params_num_class):
+    """
+    Check data type and validity.
+    """
+    if not isinstance(dtrain, xgb.DMatrix):
+        raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
+
+    
+    y = data.get_label().astype('int')
+    t = np.abs(y)
+
+    # ensure that the time column of training data has been preprocessed to integer type. 
+    if not (np.abs(y - data.get_label()) < EPS).all():
+        raise ValueError("Float value found in the time column of training data.")
+
+    # ensure that the time column of training data does not exist the value of zero.
+    if (t == 0).any():
+        raise ValueError("Zero found in the time column of training data.")
+
+    # ensure that `params_num_class` included in `model_params` 
+    # is equal to `K + 1`, where `K` denotes the maximum time in survival data.
+    if params_num_class - 1 != np.max(t):
+        raise ValueError("The value of 'num_class' in 'model_params' is \
+            not equal to the maximum time plus one (i.e. K + 1) in train data")
 
 def _hit_eval(model, eval_data):
     """

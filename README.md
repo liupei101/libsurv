@@ -2,12 +2,12 @@
 
 ## Introduction
 
-A library of efficient survival analysis models, including `DeepCox`, `HitBoost`, `CEBoost` and `EfnBoost` methods.
+A library of efficient survival analysis models, including `DeepCox`, `HitBoost`, `BecCox` and `EfnBoost` methods.
 
 - `DeepCox`: Deep cox proportional hazard model implemented by tensorflow. It's exactly the same as [`TFDeepSurv`](https://github.com/liupei101/TFDeepSurv).
 - `HitBoost`: Survival analysis via a multi-output gradient boosting decision tree method.
 - `EfnBoost`: Optimized cox proportional hazard model via an objective function of Efron approximation.
-- `CEBoost`: Adding convex function approximated concordance index in `EfnBoost` to adjust risk ranking.
+- `BecCox`: Adding convex function approximated concordance index in `EfnBoost` to adjust risk ranking.
 
 ## Enhancement
 
@@ -25,7 +25,7 @@ pip3 install .
 
 ## Usage
 
-Usage of `DeepCox`, `EfnBoost`, `CEBoost` and `HitBoost` are provided in [Jupyter Notebooks](examples/).
+Usage of `DeepCox`, `EfnBoost`, `BecCox` and `HitBoost` are provided in [Jupyter Notebooks](examples/).
 
 Hyper-parameters tuning can refer to [libsurv/bysopt](bysopt/).
 

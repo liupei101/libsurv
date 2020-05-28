@@ -1,5 +1,5 @@
 """
-templates of tuning hyperparams for CEBoost, read code and change anywhere if necessary.
+templates of tuning hyperparams for BecCox, read code and change anywhere if necessary.
 The parts between two long strings "###..###" is more likely to be changed.
 """
 # Set no warning
@@ -18,7 +18,7 @@ import hyperopt as hpt
 from sklearn.model_selection import RepeatedKFold
 
 from libsurv.datasets import survival_dmat
-from libsurv import CEBoost
+from libsurv import BecCox
 
 MSG = [
     "Error", # level 0
@@ -78,7 +78,7 @@ def invoke_xgb(data_train, data_test, params):
     }
     
     # Build and train model
-    model = CEBoost(
+    model = BecCox(
         params_model,
         loss_alpha=params["loss_alpha"]
     )

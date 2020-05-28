@@ -7,11 +7,11 @@ from ._efn_core import _efn_grads
 from ._efn_core import efn_loss
 
 from ..vision import plot_train_curve, plot_surv_curve
-from ..utils import concordance_index, baseline_survival_function
+from ..utils import concordance_index, baseline_survival_function, _check_params
 
 class model(object):
     """EfnBoost model class"""
-    def __init__(self, model_params):
+    def __init__(self, model_params=None, model_file=None):
         """
         EfnBoost Class Constructor.
 
@@ -20,10 +20,18 @@ class model(object):
         model_params: dict
             Parameters of `xgboost.train` method.
             See more in `Reference <https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.training>`.
+        
+        model_file: str
+            The model file path. This entry is mainly for loading the existing model.  
         """
         super(model, self).__init__()
         self.model_params = model_params
         self._model = None
+
+        # loading the specified model
+        self.model_file = model_file
+        if model_file is not None:
+            self._model = xgb.Booster(model_file=model_file)
 
     def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], silent=False, plot=False):
         """
@@ -63,6 +71,8 @@ class model(object):
             {'train': {'efn_loss': ['0.48253', '0.35953']},
              'eval': {'efn_loss': ['0.480385', '0.357756']}}
         """
+        # First to check the args
+        _check_params(self.model_params)
         # Check arguements of function
         if not isinstance(dtrain, xgb.DMatrix):
             raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
@@ -83,7 +93,8 @@ class model(object):
             evals_result=evals_result,
             obj=_efn_grads,
             feval=efn_loss,
-            verbose_eval=skip_rounds
+            verbose_eval=skip_rounds,
+            xgb_model=self.model_file
         )
 
         if plot:
@@ -177,6 +188,25 @@ class model(object):
         """
         score = -self.predict(dtest)
         return concordance_index(dtest.get_label(), score)
+
+    def get_factor_score(self, importance_type='weight'):
+        """
+        Get the factor importance score evaluated by the model.
+        It's suggested that you repeat obtaining the factor score 
+        for multiply times, such as 20, by specifing a different random 
+        seed in `model_params`. 
+
+        Parameters
+        ----------
+        importance_type: str
+            The metrics of importance evaluation. see more in [https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.Booster.get_score].
+
+        Returns
+        -------
+        dict
+            Factor importance score.
+        """
+        return self._model.get_score(importance_type=importance_type)
 
     def save_model(self, file_path):
         """

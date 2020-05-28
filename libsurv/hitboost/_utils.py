@@ -1,3 +1,6 @@
+import xgboost as xgb
+import numpy as np
+
 from ._hit_core import hit_tdci, hit_loss
 
 EPS = 0.00001
@@ -6,6 +9,13 @@ def _check_params(model_params):
     """
     Check `model_params`.
     """
+    if model_params is None:
+        raise ValueError("If you want to train the model, you must \
+            specify the parameter `model_params` when initializing the model.")
+
+    if type(model_params) is not dict:
+        raise TypeError("The type of `model_params` must be dict.")
+
     if "objective" in model_params:
         if model_params["objective"] != "multi:softprob":
             raise ValueError("The name of objective function must be 'multi:softprob'.")
@@ -19,7 +29,7 @@ def _check_data(data, params_num_class):
     """
     Check data type and validity.
     """
-    if not isinstance(dtrain, xgb.DMatrix):
+    if not isinstance(data, xgb.DMatrix):
         raise TypeError("The type of dtrain must be 'xgb.DMatrix'")
 
     

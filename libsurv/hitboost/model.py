@@ -15,7 +15,7 @@ from ..vision import plot_train_curve, plot_surv_curve
 
 class model(object):
     """HitBoost model"""
-    def __init__(self, model_params, loss_alpha=1.0, loss_gamma=0.01):
+    def __init__(self, model_params=None, loss_alpha=1.0, loss_gamma=0.01, model_file=''):
         """
         HitBoost Model Constructor.
 
@@ -45,6 +45,8 @@ class model(object):
             The coefficient in objective function.
         loss_gamma: float
             The parameter in L2 term.
+        model_file: str
+            The model file path. This entry is mainly for loading the existing model.  
 
         Notes
         -----
@@ -55,6 +57,10 @@ class model(object):
         _global_init(loss_alpha, loss_gamma)
         self.model_params = model_params
         self._model = None
+
+        # loading the specified model
+        if model_file != '':
+            self._model = xgb.Booster(model_file=model_file)
 
     def train(self, dtrain, num_rounds=100, skip_rounds=10, evals=[], silent=False, plot=False):
         """
@@ -189,6 +195,25 @@ class model(object):
         """
         preds = self.predict(ddata)
         return hit_tdci(preds, ddata)[1]
+
+    def get_factor_score(self, importance_type='weight'):
+        """
+        Get the factor importance score evaluated by the model.
+        It's suggested that you repeat obtaining the factor score 
+        for multiply times, such as 20, by specifing a different random 
+        seed in `model_params`. 
+
+        Parameters
+        ----------
+        importance_type: str
+            The metrics of importance evaluation. see more in [https://xgboost.readthedocs.io/en/latest/python/python_api.html#xgboost.Booster.get_score].
+
+        Returns
+        -------
+        dict
+            Factor importance score.
+        """
+        return self._model.get_score(importance_type=importance_type)
 
     def save_model(self, file_path):
         """

@@ -1,5 +1,5 @@
 """
-L2 term of objective function in CEBoost.
+L2 term of objective function in BecCox.
 
 CI approximated by convex function F and its gradients.
 

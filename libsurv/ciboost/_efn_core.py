@@ -1,5 +1,5 @@
 """
-L1 term of objective function in CEBoost.
+L1 term of objective function in BecCox.
 
 Efron Approximation partial likelihood function and its gradients
 """

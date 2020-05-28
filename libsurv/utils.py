@@ -6,6 +6,17 @@ def _check_ndarray(arr):
     if not isinstance(arr, np.ndarray):
         raise TypeError("Type of arguement only supports for numpy.ndarray.")
 
+def _check_params(model_params):
+    """
+    Check `model_params`.
+    """
+    if model_params is None:
+        raise ValueError("If you want to train the model, you must \
+            specify the parameter `model_params` when initializing the model.")
+
+    if type(model_params) is not dict:
+        raise TypeError("The type of `model_params` must be dict.")
+
 def concordance_index(y_true, y_pred):
     """
     Compute the concordance-index value.

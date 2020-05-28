@@ -1,5 +1,5 @@
 """
-Objective function and its gradients of CEBoost:
+Objective function and its gradients of BecCox:
 
 L = alpha * L1 + (1 - alpha) * L2
 """
@@ -32,7 +32,7 @@ def _params_init(params):
 
 def ce_evals(preds, dtrain):
     """
-    Evaluation of CEBoost model.
+    Evaluation of BecCox model.
 
     Parameters
     ----------
@@ -82,7 +82,7 @@ def ce_loss(preds, dtrain):
     Returns
     -------
     tuple:
-        Name and value of objective function defined in CEBoost model.
+        Name and value of objective function defined in BecCox model.
 
     Notes
     -----

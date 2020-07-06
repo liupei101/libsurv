@@ -29,6 +29,12 @@ Usage of `DeepCox`, `EfnBoost`, `BecCox` and `HitBoost` are provided in [Jupyter
 
 Hyper-parameters tuning can refer to [libsurv/bysopt](bysopt/).
 
+## Computation acceleration
+
+As the objective function gradients are computed using `numpy` package, the model fitting round would be much slow and need to be optimized.
+
+User can use `pytorch` to finish array or matrix computation instead of `numpy`. Furthermore, you can benefit from the power of GPUs. What is not acceptable is that you need to implement it yourself. 
+
 ## Citation
 
 If you would like to cite our package, some reference papers are listed below: 
